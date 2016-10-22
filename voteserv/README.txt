@@ -6,3 +6,5 @@ by haking simples (http://simples.jovial.com/).  It doesn't take
 any command-line arguments; everything is just hard-coded in,
 since I'm planning to run it in the IDE in class anyway.
 
+See src/Main.kt
+

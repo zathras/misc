@@ -1,32 +1,8 @@
 /**
- * Simple HTTP server, using code swiped from hat.
- * <p>
+ * Simple HTTP server, using code swiped from simples, whic was swiped from hat.
+ * This has been hacked to be a voting server.
  *
- * Starts an http server on port 6001 in the cwd.  As a security measure,
- * the base URL for all files is http:///.  It screens
- * against having ..'s in the path such that the server goes outside the
- * cwd.
- * <p>
- *
- * These days, modern browsers may have a security policy that defaults to
- * blocking requests to unusual ports, like 6000.  As of this writing, 6000
- * was blocked in Mozilla, because it's used for X/11.  If this is a problem,
- * you can always just use curl to get around this.  If you want to use
- * Mozilla and it someday blocks port 6001, this can be overridden
- * with the network.security.ports.banned.override config property,
- * which contains a comma-delimited list of allowed ports.  Go into
- * about:config, search for that property, and if it's not there, create
- * it (right-click in the results area, New -> String).  cf.
- * https://support.mozilla.org/en-US/questions/1083282 ,
- * http://kb.mozillazine.org/Network.security.ports.banned.override
- * <p>
- *
- * Version 1.0 written 3/27/15
-
  * @author Bill Foote
- * *
- * @version 1.1, 4/4/16
- * @version 1.2, 8/9/16 (adds TLS/SSL support)
  */
 
 import java.net.InetAddress
@@ -64,53 +40,60 @@ private fun getAddress() : InetAddress {
 }
 
 class SimpleHttp(
-        var ballot : Ballot,
+        val ballot : Ballot,
         val lock : Lock,
         val voteReceived : Condition) : QueryListener(6001, false)
 {
     override fun getHandler(query: String, rawOut: OutputStream, out: PrintWriter,
                             user : InetAddress): QueryHandler?
     {
-        println("""Query is "$query"""")
         return BallotQuery(ballot, rawOut, out, user, lock)
     }
 
     override fun handlePost(headers: HashMap<String, String>, input: BufferedInputStream,
-                            user : InetAddress)
+                            rawOut: OutputStream, out: PrintWriter,
+                            user : InetAddress) : QueryHandler?
     {
         var remaining = headers["Content-Length"]?.toLong()
         val contentType = headers["Content-Type"]
         if (remaining == null) {
             println("POST error:  No content length")
-            return;
+            return null;
         }
         if (contentType != "text/plain") {
-            println("POST warning:  contentType is $contentType, not application/octet-stream")
-            println("I'll upload it, but you get what you get.")
+            println("POST warning:  contentType is $contentType, not text/plain.")
+            println("I'll process it, but you get what you get.")
         }
-        println("length is $remaining")
-        var found : Int? = null
+        var found : Long? = null
         var round : Int? = null
+        var timestamp : Long? = null
         val votes = mutableSetOf<Int>()
         while (remaining > 0) {
             val ch = input.read();
             if (ch in '0'.toInt() .. '9'.toInt()) {
                 val d = ch - '0'.toInt()
-                found = if (found == null)  d  else  found * 10 + d
+                found = if (found == null)  d.toLong() else  found * 10 + d
             } else if (ch == '='.toInt()) {
                 if (found == null) {
                     println("parse error:  found is null")
                 } else {
-                    if (found >= 0) {   // If this isn't -1 from round, below
-                        votes.add(found)
+                    if (found >= 0) {   // If this isn't -1 from below
+                        votes.add(found.toInt())
                     }
                     found = null
+                }
+            } else if (ch == 't'.toInt()) {
+                if (found == null) {
+                    println("parse error:  found is null for timestamp")
+                } else {
+                    timestamp = found
+                    found = -1      // Skip error when we see the '='
                 }
             } else if (ch == 'r'.toInt()) {
                 if (found == null) {
                     println("parse error:  found is null for round")
                 } else {
-                    round = found
+                    round = found.toInt()
                     found = -1      // Skip error when we see the '='
                 }
             } else if (found != null) {
@@ -120,7 +103,13 @@ class SimpleHttp(
             remaining--;
         }
         lock.withLock {
-            if (ballot.round == round && !ballot.voted.contains(user)) {
+            if (ballot.timestamp != timestamp) {
+                println("Error:  $user tried to vote on a different (older?) ballot.")
+            } else if (ballot.round != round) {
+                println("Error:  $user tried to vote in round $round.")
+            } else if (ballot.voted.contains(user)) {
+                println("Error:  $user tried to vote twice.")
+            } else {
                 for (i in votes) {
                     ballot.candidates[i].votes++
                 }
@@ -128,14 +117,13 @@ class SimpleHttp(
                 voteReceived.signalAll()
             }
         }
+        return BallotQuery(ballot, rawOut, out, user, lock)
     }
-
 
     val publicURL: String @Throws(IOException::class)
         get() {
             val scheme = if (enableSsl) "https" else "http"
             return scheme + "://" + localInetAddress.hostAddress + ":" + port + "/"
         }
-
 }
 

@@ -30,7 +30,8 @@ abstract class QueryListener(val port: Int, val enableSsl : Boolean) : Runnable 
                             user : InetAddress): QueryHandler?
 
     abstract fun handlePost(headers: HashMap<String, String>, input: BufferedInputStream,
-                            user : InetAddress)
+                            rawOut: OutputStream, out: PrintWriter,
+                            user : InetAddress) : QueryHandler?
 
     override fun run() {
         try {

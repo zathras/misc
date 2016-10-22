@@ -104,8 +104,10 @@ class HttpReader(private val socket: Socket, private val queryListener: QueryLis
                             headers[key] = value;
                         }
                     }
-                    queryListener.handlePost(headers, input, user)
-                    h = ErrorQueryHandler("POST probably went OK", rawOut!!, out!!)
+                    h = queryListener.handlePost(headers, input, rawOut!!, out!!, user)
+                    if (h == null) {
+                        h = ErrorQueryHandler("Post query not implemented", rawOut!!, out!!)
+                    }
                 } else {
                     val msg = if (c5 == -1) {
                         "EOF on socket read"
