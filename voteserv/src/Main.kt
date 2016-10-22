@@ -14,7 +14,7 @@
  *      while there's more than one candidate {
  *          for each voter {
  *              Present them with a list of candidates in random order
- *              them vote for the names they like
+ *              have them vote for the names they like
  *          }
  *          minVotes = the lowest number of votes any candidate got
  *          remove all candidates that got minVotes votes
