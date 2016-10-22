@@ -58,6 +58,10 @@ data class Ballot(
         val voted : MutableSet<InetAddress> = mutableSetOf<InetAddress>(),
         val timestamp : Long = System.currentTimeMillis()
 ) {
+    /**
+     * Prepeare for a new round of voting, by incrementing the round counter,
+     * and initializing the vote count for each candidate to zero.
+     */
     fun startNextRound(candidates : Array<Candidate>){
         this.candidates = candidates
         for (c in candidates) {
@@ -158,6 +162,15 @@ fun main(args:  Array<String>) {
     }
 }
 
+/**
+ * Calculate the winners of this round of voting, as follows:
+ *
+ *     Figure out the maximum and minimum number of votes any candidate got
+ *     if maximum == minimum
+ *         everybody wins -- the next round will have the same slate of candidates
+ *     else
+ *         Any candidate that got more than the minimum # of votes is a winner
+ */
 fun calculateWinners(candidates : Array<Candidate>) : Array<Candidate> {
     val winners = mutableListOf<Candidate>()
     var minVotes = candidates[0].votes;
