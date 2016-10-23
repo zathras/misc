@@ -85,7 +85,6 @@ fun main(args:  Array<String>) {
     //
     // Make a ballot consisting of a list of all of our candidates.
     //
-    /*
     var ballot = Ballot(arrayOf(
             Candidate("FluffyBunnies"),
             Candidate("GlorpAndMath"),
@@ -104,15 +103,9 @@ fun main(args:  Array<String>) {
             Candidate("determined"),
             Candidate("difference")
     ))
-    */
-    var ballot = Ballot(arrayOf(
-            Candidate("Spinach"),
-            Candidate("Brussel Sprouts"),
-            Candidate("Chocolate")
-    ))
 
     //
-    // Our http server is multithreaded, so we need to deal with locking.
+    // Our http server is multthreaded, so we need to deal with locking.
     // One lock and one condition variable will do.  We just use the classic
     // old-school Java wait/notifyAll paradigm.
     //

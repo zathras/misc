@@ -2,9 +2,10 @@
  * screenf, as of old.  Yeah, I used lower case.
  * 
  * Usage:
- *     java < foo.screen
+ *     java screenf < foo.screen
  *
- * I do that as "!!java < foo.screen" within vi.  A "screen" file contains
+ * I do that as "!!screenf < foo.screen" within vi, where screenf is the
+ * obvious shell script in ~/bin.  A "screen" file contains
  * text to make up a scren, and a "&p" where you want a varible put field, 
  * and a &g where you want a variable get field.  See Screen.java.
  **/
