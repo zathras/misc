@@ -86,6 +86,10 @@ fun main(args:  Array<String>) {
     // Make a ballot consisting of a list of all of our candidates.
     //
     var ballot = Ballot(arrayOf(
+            Candidate("Anika and Tejal"),
+            Candidate("Krystal and Alyssa"),
+            Candidate("Isabel and Jenna")
+            /*
             Candidate("FluffyBunnies"),
             Candidate("GlorpAndMath"),
             Candidate("witches-who-code"),
@@ -102,6 +106,7 @@ fun main(args:  Array<String>) {
             Candidate("SwaggyCodersOfIrvine"),
             Candidate("determined"),
             Candidate("difference")
+            */
     ))
 
     //
