@@ -296,7 +296,7 @@ public class JsonPretty {
                     if (ch == ':') {
 			output.write('\n');
 			printIndent(indent);
-			output.write(": ");
+			output.write(" : ");
 			break;
                     } else if (skipWhitespace(ch)) {
                         continue;
