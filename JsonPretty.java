@@ -281,11 +281,13 @@ public class JsonPretty {
                 continue;
             } else if (ch == '}') {
 		output.write('\n');
+		output.flush();
 		printIndent(indent - levelIndent);
 		output.write('}');
                 return;
             } else if (ch == ',') {
 		output.write(",\n");
+		output.flush();
                 continue;
             } else {
 		printIndent(indent);
@@ -295,6 +297,7 @@ public class JsonPretty {
                     ch = input.read();
                     if (ch == ':') {
 			output.write('\n');
+			output.flush();
 			printIndent(indent);
 			output.write(" : ");
 			break;
@@ -317,6 +320,7 @@ public class JsonPretty {
                 throwUnexpected(ch);
             } else if (ch == ']') {
 		output.write("\n");
+		output.flush();
 		printIndent(indent - levelIndent);
 		output.write(']');
 		return;
@@ -334,9 +338,11 @@ public class JsonPretty {
                 int ch = input.read();
                 if (ch == ',') {
 		    output.write(",\n");
+		    output.flush();
                     break;
                 } else if (ch == ']') {
 		    output.write('\n');
+		    output.flush();
 		    printIndent(indent - levelIndent);
 		    output.write(']');
 		    return;
