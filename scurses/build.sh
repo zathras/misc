@@ -2,5 +2,5 @@
 rm -rf classes
 mkdir classes
 cd src
-javac -d ../classes scurses/*.java
+javac -source 1.5 -target 1.5 -d ../classes scurses/*.java
 
