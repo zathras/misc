@@ -24,5 +24,9 @@ public class Main {
 	assert (n instanceof Long);
 	n = readFrom("" + Long.MIN_VALUE);
 	assert (n instanceof Long);
+	n = readFrom("9223372036854775808");
+	assert (n instanceof Double);
+	n = readFrom("-9223372036854775809");
+	assert (n instanceof Double);
     }
 }
