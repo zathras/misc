@@ -1,4 +1,14 @@
 
+/*
+ * This is a little hack to experience the wonder of interacting
+ * with Unix at a low speed, like we did on 110 baud teletype machines,
+ * 1200 (or 300) baud modems, and 9600 baud hard-wired connections.
+ * It is definitely not a good example of coding style or design; it's
+ * a quick C hack.
+ *
+ * See run.sh for some commands to run bash with a simulated low
+ * baud rate.
+ */
 
 #include <sys/timeb.h>
 #include <stdio.h>
@@ -71,6 +81,3 @@ int main(int argc, char** argv) {
     printf("\nbaudsim terminates.\n");
     return 0;
 }
-
-
-
