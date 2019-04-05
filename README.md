@@ -20,3 +20,8 @@ welcome to it.  This repository contains:
         An http server to do fair voting.
         See voteserv/src/Main.kt for a description.
 
+    flower
+        An ancient, partial UML design tool written in Eiffel and Tcl/Tk
+
+    baudsim
+        A cheezy program to simulate a slow serial connection
