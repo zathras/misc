@@ -1,5 +1,4 @@
 #!/bin/bash
-echo $#
 if [ $# != 1 ] ; then
     echo "Defaulting to 1200 baud."
     baud=1200
