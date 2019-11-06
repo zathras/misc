@@ -5,7 +5,6 @@ package scurses;
  * Screen representation, based on curses.  A screen consists of a list
  * of fields, where fields can be fixed, variable put fields (display), 
  * or variable get fields.
- * be get or put.
  **/
 
 public class Screen {
