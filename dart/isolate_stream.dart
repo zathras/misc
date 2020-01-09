@@ -12,6 +12,8 @@ import 'package:pointycastle/export.dart'; // Only for Cipher*Stream
 ///  generating function, if needed, so that the Send/ReceivePort buffer
 ///  doesn't get overly large.
 class IsolateStream<T, A> extends DelegatingStream<T> {
+  final _IsolateStreamGenerator<T, A> _isolateManager;
+
   /// Create a new stream with the given generating function, which
   /// takes an argument of type A, and produces an Iterator<T>.
   /// function should give an estimate of the size of an object of type T,
@@ -30,8 +32,13 @@ class IsolateStream<T, A> extends DelegatingStream<T> {
   /// for sizeOf and maxBuf, so long as you are consistent.
   IsolateStream(Iterator<T> Function(A) generator, A generatorArg,
       int Function(T value) sizeOf, {int maxBuf})
-      : super(_IsolateStreamGenerator<T, A>(generatorArg, sizeOf, maxBuf)
-            .generateFromIterator(generator));
+      : this._fromIterator(
+            _IsolateStreamGenerator<T, A>(generatorArg, sizeOf, maxBuf),
+            generator);
+
+  IsolateStream._fromIterator(
+      this._isolateManager, Iterator<T> Function(A) generator)
+      : super(_isolateManager.generateFromIterator(generator));
 
   /// Create a new stream with the given generating function, which
   /// takes an argument of type A, and produces a StreamIterator<T>.
@@ -52,8 +59,13 @@ class IsolateStream<T, A> extends DelegatingStream<T> {
   /// for sizeOf and maxBuf, so long as you are consistent.
   IsolateStream.fromStreamIterator(StreamIterator<T> Function(A) generator,
       A generatorArg, int Function(T value) sizeOf, {int maxBuf})
-      : super(_IsolateStreamGenerator<T, A>(generatorArg, sizeOf, maxBuf)
-            .generateFromStreamIterator(generator));
+      : this._fromStreamIterator(
+            _IsolateStreamGenerator<T, A>(generatorArg, sizeOf, maxBuf),
+            generator);
+
+  IsolateStream._fromStreamIterator(
+      this._isolateManager, StreamIterator<T> Function(A) generator)
+      : super(_isolateManager.generateFromStreamIterator(generator));
 
   /// Create a new stream with the given generating function, which
   /// takes an argument of type A and a Sink<T>.
@@ -82,8 +94,19 @@ class IsolateStream<T, A> extends DelegatingStream<T> {
       A generatorArg,
       int Function(T value) sizeOf,
       {int maxBuf})
-      : super(_IsolateStreamGenerator<T, A>(generatorArg, sizeOf, maxBuf)
-            .generateFromSink(generator));
+      : this._fromSink(
+            _IsolateStreamGenerator<T, A>(generatorArg, sizeOf, maxBuf),
+            generator);
+
+  IsolateStream._fromSink(this._isolateManager,
+      Future<void> Function(A, IsolateGeneratorSink<dynamic>) generator)
+      : super(_isolateManager.generateFromSink(generator));
+
+  /// Request our generating to shut down, by calling Isolate.kill with the
+  /// given argument.  This should not normally be necessary, but it may be
+  /// useful to clean up under exceptional circumstances.
+  void kill({int priority: Isolate.beforeNextEvent}) =>
+      _isolateManager.kill(priority);
 }
 
 /// A helper to do the work of generating a Stream<T> in another isolate.
@@ -96,6 +119,8 @@ class _IsolateStreamGenerator<T, A> {
   final isolateExit = ReceivePort();
   final isolateResults = ReceivePort();
   final ackPortGetter = ReceivePort();
+  int _killedWith;
+  Isolate _isolate;
 
   _IsolateStreamGenerator(A _generatorArg, int Function(T) _sizeOf, int maxBuf)
       : this._raw(_generatorArg, _sizeOf,
@@ -127,10 +152,17 @@ class _IsolateStreamGenerator<T, A> {
 
   Stream<T> _generate(Function generator, Function runner) async* {
     final args = _makeArgs(generator);
-    final isolate = await Isolate.spawn<_IsolateArgs>(runner, args,
+    if (_killedWith != null) {
+      return;
+    }
+    _isolate = await Isolate.spawn<_IsolateArgs>(runner, args,
         onExit: isolateExit.sendPort,
         debugName: '${this.runtimeType}',
         errorsAreFatal: true);
+    if (_killedWith != null) {
+      _isolate.kill(priority: _killedWith);
+      return;
+    }
     // Get the port that _runIsolate sends to us for flow control
     final SendPort ackPort = await ackPortGetter.first;
     ackPortGetter.close();
@@ -147,9 +179,21 @@ class _IsolateStreamGenerator<T, A> {
         yield tv;
       }
     }
-    isolate.kill();
+    _isolate.kill();
     final done = await isolateExit.first;
     await isolateExit.close();
+  }
+
+  /// See the documentation for IsolateStream.kill(int).
+  void kill(int priority) {
+    if (priority == null) {
+      priority = Isolate.beforeNextEvent;
+    }
+    _killedWith = priority;
+    // Record the priority in case _isolate is null -- see _generate().
+    if (_isolate != null) {
+      _isolate.kill(priority: priority);
+    }
   }
 
   /// Initialize our run inside the isolate.
