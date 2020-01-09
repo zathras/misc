@@ -1,7 +1,7 @@
 # misc-dart
 Miscellaneous small-ish bits of Dart code.  It's mostly for my own
 use, buy you're welcome to it.  Please to attribute it if you do, e.g.
-with a link to https://bill.jovial.com/.  See ../LICENSE.
+with a link to https://jovial.com/bill.html.  See ../LICENSE.
 
 This directory contains:
 
