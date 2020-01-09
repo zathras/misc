@@ -1,18 +1,18 @@
 /// This module contains a set of tests for isolate_stream.dart.  Add them
 /// to a test harness by calling add_isolate_stream_tests().
 
-import 'package:test/test.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:intl/intl.dart';
 import 'package:pointycastle/export.dart';
 
-import 'isolate_stream.dart';
+import 'package:jovial_misc/isolate_stream.dart';
 
 Iterator<String> _generateStringIterator(List<String> arg) => arg.iterator;
 

@@ -1,3 +1,7 @@
+/// Miscellaneous I/O utilities.
+
+library io_utils;
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -78,7 +82,7 @@ class DataInputStream {
   /// Make sure that at least one byte is in the buffer.
   Future<void> _ensureNext() async {
     if (await isEOF()) {
-      throw const EOFException("Unexpected EOF");
+      throw EOFException("Unexpected EOF");
     }
     // isEOF() sets up _curr and _pos as a side effect.
   }
@@ -88,6 +92,9 @@ class DataInputStream {
   ///
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   Future<Uint8List> readBytes(int num) async {
+    if (num == 0) {
+      return Uint8List(0);
+    }
     await _ensureNext();
     if (_pos + num <= _curr.length) {
       final Uint8List result = _curr.sublist(_pos, _pos + num);
@@ -97,13 +104,10 @@ class DataInputStream {
       final len = _curr.length - _pos;
       assert(len > 0 && len < num);
       final result = Uint8List(num);
-      int i = 0;
-      for (final b in (await readBytes(len))) {
-        result[i++] = b;
-      }
-      for (final b in (await readBytes(num - len))) {
-        result[i++] = b;
-      }
+      final Uint8List buf = await readBytes(len);
+      result.setRange(0, len, buf);
+      final buf2 = await readBytes(num - len);
+      result.setRange(len, num, buf2);
       return result;
     }
   }
@@ -113,6 +117,9 @@ class DataInputStream {
   ///
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   Future<Uint8List> readBytesImmutable(int num) async {
+    if (num == 0) {
+      return Uint8List(0);
+    }
     await _ensureNext();
     if (_pos == 0 && num == _curr.length) {
       _pos = _curr.length;
@@ -317,18 +324,15 @@ class DataInputStream {
 ///
 /// See also DataInputStream
 class ByteBufferDataInputStream {
-  final ByteBuffer _source;
+  final Uint8List _source;
   final ByteData _asByteData;
   int _pos = 0;
   static const utf8Decoder = const Utf8Decoder(allowMalformed: true);
 
   ByteBufferDataInputStream._raw(this._source, this._asByteData);
 
-  ByteBufferDataInputStream(ByteBuffer source)
-      : this._raw(source, source.asByteData());
-
-  ByteBufferDataInputStream.fromUint8List(Uint8List source)
-      : this(source.buffer);
+  ByteBufferDataInputStream(Uint8List source)
+      : this._raw(source, source.buffer.asByteData());
 
   /// Returns the number of bytes that can be read from the internal buffer.
   ///  If we're at EOF, returns zero, otherwise, returns a non-zero positive
@@ -341,7 +345,7 @@ class ByteBufferDataInputStream {
   /// Returns a new, mutable Uint8List containing the desired number
   /// of bytes.
   Uint8List readBytes(int num) {
-    return Uint8List.fromList(readBytesImmutable(num));
+    return readBytesImmutable(num);
   }
 
   /// Returns a potentially immutable Uint8List containing the desired number
@@ -353,7 +357,7 @@ class ByteBufferDataInputStream {
     if (_pos + num > _source.lengthInBytes) {
       throw EOFException("Attempt to read beyond end of input");
     } else {
-      final Uint8List result = _source.asUint8List(_pos, num);
+      final Uint8List result = _source.sublist(_pos, _pos + num);
       _pos += num;
       return result;
     }
@@ -495,13 +499,17 @@ class DataOutputSink {
 
   /// Write the specified byte.
   void writeByte(int b) {
-    _dest.add([b & 0xff]);
+    _dest.add(Uint8List.fromList([b & 0xff]));
   }
 
   /// Write the given bytes.  A Uint8List is the recommended subtype
   /// of List<int>.
   void writeBytes(List<int> bytes) {
-    _dest.add(bytes);
+    if (bytes is Uint8List) {
+      _dest.add(bytes);
+    } else {
+      _dest.add(Uint8List.fromList(bytes));
+    }
   }
 
   void writeBoolean(bool v) {
@@ -540,13 +548,13 @@ class DataOutputSink {
 
   /// Write the given string as an unsigned short byte length, followed
   /// by an array of UTF8 characters.  This shoould be compatable with
-  /// Java's DataOutputStream.writeUTF, as long as the string contains no
+  /// Java's DataOutputStream.writeUTF8, as long as the string contains no
   /// nulls and no UTF formats beyond the 1, 2 and 3 byte formats.  See
   /// https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/DataInput.html#modified-utf-8
   ///
   /// Throws an ArgumentError if the encoded string length doesn't fit
   /// in an unsigned short.
-  writeUTF(String s) {
+  writeUTF8(String s) {
     Uint8List utf8 = (const Utf8Encoder()).convert(s);
     if (utf8.length > 0xffffffff) {
       throw ArgumentError(

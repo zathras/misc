@@ -1,19 +1,19 @@
 /// This module contains a set of tests for io_utils.dart.  Add them
 /// to a test harness by calling add_io_utils_tests().
 
-import 'package:test/test.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:intl/intl.dart';
 import 'package:pointycastle/export.dart';
 
-import 'io_utils.dart';
-import 'isolate_stream.dart';
+import 'package:jovial_misc/io_utils.dart';
+import 'package:jovial_misc/isolate_stream.dart';
 
 Uint8List _nextBytes(Random rand, int size) {
   final result = Uint8List(size);
@@ -215,7 +215,7 @@ void add_io_utils_tests() {
   //
   for (var i = 0; i < 250; i += 1 + i ~/ 5 + i ~/ 10) {
     test('length factor $i', () async {
-      var data = List<List<int>>(i);
+      final data = List<List<int>>(i);
       for (var j = 0; j < 1000; j += 1 + j ~/ 5 + j ~/ 10) {
         for (var ii = 0; ii < i; ii++) {
           data[ii] = List(rand.nextInt(j + 1));
@@ -229,10 +229,65 @@ void add_io_utils_tests() {
   }
 
   //
-  // Just for fun, create an isolate so we can stream data through
-  // encryption/decryption without buffering it all in memory.
-  //
+  // Test all the different data types
+  test('Data[Input|Output]Stream all methods', () async {
+    final acc = AccumulatorSink<Uint8List>();
+    final out = DataOutputSink(acc);
+    out.writeBoolean(false);
+    out.writeByte(1);
+    out.writeBytes(const [2, 3]);
+    out.writeBytes(const [4, 5]);
+    out.writeShort(6);
+    out.writeUnsignedShort(7);
+    out.writeInt(8);
+    out.writeUnsignedInt(9);
+    out.writeLong(10);
+    out.writeUTF8("eleven");
+    out.writeBytes(const <int>[]);
+    out.close();
 
+    final equals = ListEquality<int>().equals;
+    final allBytes =
+        acc.events.fold(ByteAccumulatorSink(), (a, b) => a..add(b)).bytes;
+    final dis = ByteBufferDataInputStream(allBytes);
+    expect(dis.readBoolean(), false);
+    expect(dis.readByte(), 1);
+    expect(equals(dis.readBytes(2), const [2, 3]), true);
+    expect(equals(dis.readBytesImmutable(2), const [4, 5]), true);
+    expect(dis.readShort(), 6);
+    expect(dis.readUnsignedShort(), 7);
+    expect(dis.readInt(), 8);
+    expect(dis.readUnsignedInt(), 9);
+    expect(dis.readLong(), 10);
+    expect(dis.readUTF8(), "eleven");
+    expect(equals(dis.readBytes(0), const <int>[]), true);
+    expect(equals(dis.readBytesImmutable(0), const <int>[]), true);
+    expect(dis.isEOF(), true);
+    dis.close();
+
+    final dis2 = DataInputStream(Stream.fromIterable(acc.events));
+    expect(await dis2.readBoolean(), false);
+    expect(await dis2.readByte(), 1);
+    expect(equals(await dis2.readBytes(2), const [2, 3]), true);
+    expect(equals(await dis2.readBytesImmutable(2), const [4, 5]), true);
+    expect(await dis2.readShort(), 6);
+    expect(await dis2.readUnsignedShort(), 7);
+    expect(await dis2.readInt(), 8);
+    expect(await dis2.readUnsignedInt(), 9);
+    expect(await dis2.readLong(), 10);
+    expect(await dis2.readUTF8(), "eleven");
+    expect(equals(dis.readBytes(0), const <int>[]), true);
+    expect(equals(dis.readBytesImmutable(0), const <int>[]), true);
+    expect(await dis2.isEOF(), true);
+    await dis2.close();
+  });
+
+  // Create an isolate so we can stream data through
+  // encryption/decryption without buffering it all in memory.  These
+  // tests are randomized, so I run a fair number of iterations.
   test('stream test 5', () => bigTest(rand, 5));
+  for (int i = 0; i < 100; i++) {
+    test('stream test 250 $i', () => bigTest(rand, 250));
+  }
   test('stream test 25000', () => bigTest(rand, 25000));
 }

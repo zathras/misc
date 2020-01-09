@@ -1,3 +1,8 @@
+/// Support for running a generator function in an isolate, so that
+/// generation can be run in a separate thread.
+
+library isolate_stream;
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -170,18 +175,18 @@ class _IsolateStreamGenerator<T, A> {
     while (await results.moveNext()) {
       final dynamic v = results.current;
       if (v == args.eof) {
-        isolateResults.close();
+        ackPort.send(args.ack); // We send an ack to the eof
+        break;
       } else if (v == args.ack) {
         ackPort.send(args.ack); // We send an ack whenever one is asked for
       } else {
         assert(v != null);
-        T tv = v as T;
-        yield tv;
+        yield v as T;
       }
     }
-    _isolate.kill();
     final done = await isolateExit.first;
-    await isolateExit.close();
+    isolateExit.close();
+    isolateResults.close();
   }
 
   /// See the documentation for IsolateStream.kill(int).
@@ -215,6 +220,7 @@ class _IsolateStreamGenerator<T, A> {
     }
     dest.close();
     await dest.waitForAcks(0);
+    Isolate.current.kill();
   }
 
   static void _runStreamIteratorInIsolate(_IsolateArgs args) async {
@@ -226,6 +232,7 @@ class _IsolateStreamGenerator<T, A> {
     }
     dest.close();
     await dest.waitForAcks(0);
+    Isolate.current.kill();
   }
 
   static void _runSinkInIsolate(_IsolateArgs args) async {
@@ -233,8 +240,9 @@ class _IsolateStreamGenerator<T, A> {
     var sink = IsolateGeneratorSink<dynamic>._fromAdapter(dest);
     await args.generator(args.generatorArg, sink);
     assert(sink.closed); // The generator should close the sink
-    sink.close(); //  ... in case it didn't
+    sink.close(); //  In case it didn't.  This ensures dest.close() is called.
     await dest.waitForAcks(0);
+    Isolate.current.kill();
   }
 }
 
@@ -326,8 +334,7 @@ class _SendPortAdapter<T> implements Sink<T> {
 
   @override
   void close() {
-    _port.send(_ack);
-    _port.send(_eof);
+    _port.send(_eof);   // This generates a return ack
     _acksSent++;
   }
 
