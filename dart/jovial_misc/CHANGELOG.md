@@ -9,3 +9,7 @@
 ## 0.1.0 Jan. 9 2020
 
 - All known issues fixed.
+
+## 0.1.1
+
+- Cosmetic fixes to README and example
