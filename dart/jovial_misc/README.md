@@ -11,19 +11,21 @@ Created from templates made available by Stagehand under a BSD-style
 A simple usage example:
 
 ```dart
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:convert/convert.dart';
 import 'package:jovial_misc/io_utils.dart';
 
-main() {
-  final acc = AccumulatorSink<Uint8List>();
+main() async {
+  final acc = ByteAccumulatorSink();
   final out = DataOutputSink(acc);
   out.writeUTF8("Hello, world.");
   out.close();
 
-  final allBytes =
-      acc.events.fold(ByteAccumulatorSink(), (a, b) => a..add(b)).bytes;
-  final dis = ByteBufferDataInputStream(allBytes);
-  print(dis.readUTF8());
-  dis.close();
+  final stream = Stream<List<int>>.fromIterable([acc.bytes]);
+  final dis = DataInputStream(stream);
+  print(await dis.readUTF8());
+  await dis.close();
 }
 ```
 

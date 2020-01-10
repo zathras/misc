@@ -3,9 +3,6 @@
 # see https://github.com/dart-lang/pedantic#enabled-lints.
 include: package:pedantic/analysis_options.yaml
 
-linter:
-    rules:
-        prefer_single_quotes: false
 
 # For lint rules and documentation, see http://dart-lang.github.io/linter/lints.
 # Uncomment to specify additional rules.

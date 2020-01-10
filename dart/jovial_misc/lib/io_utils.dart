@@ -15,8 +15,9 @@ class EOFException implements IOException {
 
   const EOFException(this.message);
 
+  @override
   String toString() {
-    return "EOFException: $message";
+    return 'EOFException: $message';
   }
 }
 
@@ -41,7 +42,7 @@ class DataInputStream {
   final StreamIterator<List<int>> _source;
   Uint8List _curr;
   int _pos;
-  static const utf8Decoder = const Utf8Decoder(allowMalformed: true);
+  static const utf8Decoder = Utf8Decoder(allowMalformed: true);
 
   DataInputStream._internal(this._source);
 
@@ -62,7 +63,7 @@ class DataInputStream {
   /// Check if we're at end of file.
   Future<bool> isEOF() async {
     while (_curr == null || _pos == _curr.length) {
-      bool ok = await _source.moveNext();
+      final ok = await _source.moveNext();
       if (!ok) {
         return true;
       }
@@ -82,7 +83,7 @@ class DataInputStream {
   /// Make sure that at least one byte is in the buffer.
   Future<void> _ensureNext() async {
     if (await isEOF()) {
-      throw EOFException("Unexpected EOF");
+      throw EOFException('Unexpected EOF');
     }
     // isEOF() sets up _curr and _pos as a side effect.
   }
@@ -372,7 +373,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   Uint8List readBytesImmutable(int num) {
     if (_pos + num > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final Uint8List result = _source.sublist(_pos, _pos + num);
       _pos += num;
@@ -385,7 +386,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   int readInt() {
     if (_pos + 4 > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final result = _asByteData.getInt32(_pos);
       _pos += 4;
@@ -398,7 +399,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   int readUnsignedInt() {
     if (_pos + 4 > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final result = _asByteData.getUint32(_pos);
       _pos += 4;
@@ -411,7 +412,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   int readUnsignedShort() {
     if (_pos + 2 > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final result = _asByteData.getUint16(_pos);
       _pos += 2;
@@ -424,7 +425,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   int readShort() {
     if (_pos + 2 > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final result = _asByteData.getInt16(_pos);
       _pos += 2;
@@ -437,7 +438,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed byte is read.
   int readUnisgnedByte() {
     if (_pos + 1 > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final result = _asByteData.getUint8(_pos);
       _pos += 1;
@@ -450,7 +451,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed byte is read.
   int readByte() {
     if (_pos + 1 > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final result = _asByteData.getInt8(_pos);
       _pos += 1;
@@ -463,7 +464,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   int readLong() {
     if (_pos + 8 > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final result = _asByteData.getInt64(_pos);
       _pos += 8;
@@ -477,7 +478,7 @@ class ByteBufferDataInputStream {
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   int readUnsignedLong() {
     if (_pos + 8 > _source.lengthInBytes) {
-      throw EOFException("Attempt to read beyond end of input");
+      throw EOFException('Attempt to read beyond end of input');
     } else {
       final result = _asByteData.getUint64(_pos);
       _pos += 8;
@@ -597,7 +598,7 @@ class DataOutputSink {
     Uint8List utf8 = (const Utf8Encoder()).convert(s);
     if (utf8.length > 0xffffffff) {
       throw ArgumentError(
-          "Byte length ${utf8.length} exceeds maximum of ${0xffffffff}");
+          'Byte length ${utf8.length} exceeds maximum of ${0xffffffff}');
     }
     writeUnsignedShort(utf8.length);
     _dest.add(utf8);
