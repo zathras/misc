@@ -352,7 +352,8 @@ class _SendPortAdapter<T> implements Sink<T> {
   }
 }
 
-/// As a convenience, here's the common case of an IsolateStream<Uint8List>.
+/// A convenience implementation of the common case of an 
+// IsolateStream<Uint8List>.
 /// This can be useful for generating a stream that is large -- many GB, or
 /// even more -- that appears to come from a file or a socket.  Because it
 /// runs in an isolate, the producer runs in parallel with the consumer.
@@ -377,6 +378,5 @@ class Uint8ListIsolateStream<A> extends IsolateStream<Uint8List, A> {
       {int maxBuf})
       : super.fromSink(generator, generatorArg, _sizeOf, maxBuf: maxBuf);
 
-  static int _sizeOfImpl(Uint8List el) => el.length;
-  static var _sizeOf = _sizeOfImpl;
+  static int _sizeOf(Uint8List el) => el.length;
 }

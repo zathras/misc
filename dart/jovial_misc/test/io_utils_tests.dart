@@ -242,7 +242,8 @@ void add_io_utils_tests() {
     out.writeInt(8);
     out.writeUnsignedInt(9);
     out.writeLong(10);
-    out.writeUTF8("eleven");
+    out.writeUnsignedLong(11);
+    out.writeUTF8("zero X zero C");
     out.writeBytes(const <int>[]);
     out.close();
 
@@ -259,7 +260,8 @@ void add_io_utils_tests() {
     expect(dis.readInt(), 8);
     expect(dis.readUnsignedInt(), 9);
     expect(dis.readLong(), 10);
-    expect(dis.readUTF8(), "eleven");
+    expect(dis.readUnsignedLong(), 11);
+    expect(dis.readUTF8(), "zero X zero C");
     expect(equals(dis.readBytes(0), const <int>[]), true);
     expect(equals(dis.readBytesImmutable(0), const <int>[]), true);
     expect(dis.isEOF(), true);
@@ -275,7 +277,8 @@ void add_io_utils_tests() {
     expect(await dis2.readInt(), 8);
     expect(await dis2.readUnsignedInt(), 9);
     expect(await dis2.readLong(), 10);
-    expect(await dis2.readUTF8(), "eleven");
+    expect(await dis2.readUnsignedLong(), 11);
+    expect(await dis2.readUTF8(), "zero X zero C");
     expect(equals(dis.readBytes(0), const <int>[]), true);
     expect(equals(dis.readBytesImmutable(0), const <int>[]), true);
     expect(await dis2.isEOF(), true);

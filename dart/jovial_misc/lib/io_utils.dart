@@ -241,6 +241,23 @@ class DataInputStream {
     }
   }
 
+  /// Reads and returns an 8-byte unsigned big-endian integer, converted to
+  /// a Dart int according to the semantics of ByteData.getUint64().
+  ///
+  /// Throws EOFException if EOF is reached before the needed bytes are read.
+  Future<int> readUnsignedLong() async {
+    await _ensureNext();
+    if (_curr.length - _pos <= 8) {
+      // If we're on a buffer boundary
+      // Keep it simple
+      return ByteData.view((await readBytes(8)).buffer).getUint64(0);
+    } else {
+      var result = ByteData.view(_curr.buffer).getUint64(_pos);
+      _pos += 8;
+      return result;
+    }
+  }
+
   /// Reads a string encoded in UTF8.  This method first reads a 2 byte
   /// unsigned integer, given the number of UTF8 bytes to read.  It then reads
   /// those bytes, and converts them to a string using Dart's UTF8 conversion.
@@ -428,7 +445,7 @@ class ByteBufferDataInputStream {
     }
   }
 
-  /// Reads and returns a signed byte.
+  /// Reads and returns an unsigned byte.
   ///
   /// Throws EOFException if EOF is reached before the needed byte is read.
   int readByte() {
@@ -449,6 +466,20 @@ class ByteBufferDataInputStream {
       throw EOFException("Attempt to read beyond end of input");
     } else {
       final result = _asByteData.getInt64(_pos);
+      _pos += 8;
+      return result;
+    }
+  }
+
+  /// Reads and returns an 8-byte unsigned big-endian integer, converted to
+  /// a Dart int according to the semantics of ByteData.getUint64().
+  ///
+  /// Throws EOFException if EOF is reached before the needed bytes are read.
+  int readUnsignedLong() {
+    if (_pos + 8 > _source.lengthInBytes) {
+      throw EOFException("Attempt to read beyond end of input");
+    } else {
+      final result = _asByteData.getUint64(_pos);
       _pos += 8;
       return result;
     }
@@ -497,7 +528,7 @@ class DataOutputSink {
 
   DataOutputSink(this._dest);
 
-  /// Write the specified byte.
+  /// Write the low 8 bits of the given integer as a single byte.
   void writeByte(int b) {
     _dest.add(Uint8List.fromList([b & 0xff]));
   }
@@ -512,35 +543,43 @@ class DataOutputSink {
     }
   }
 
+  /// Writes a byte containg 0 if v is false, and 1 if it is true.
   void writeBoolean(bool v) {
     writeByte(v ? 1 : 0);
   }
 
+  /// Writes a 2 byte signed short in big-endian format.
   writeShort(int v) {
     ByteData d = ByteData(2)..setInt16(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
+  /// Writes a 2 byte unsigned short in big-endian format.
   writeUnsignedShort(int v) {
     ByteData d = ByteData(2)..setUint16(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
+  /// Writes a 4 byte int in big-endian format.
   writeInt(int v) {
     ByteData d = ByteData(4)..setInt32(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
+  /// Writes a 4 byte unsigned int in big-endian format.
   writeUnsignedInt(int v) {
     ByteData d = ByteData(4)..setUint32(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
+  /// Writes an 8 byte long int in big-endian format.
   writeLong(int v) {
     ByteData d = ByteData(8)..setInt64(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
+  /// Writes an unsigned 8 byte long in big-endian format.  Converts a Dart 
+  /// int according to the semantics of ByteData.setUint64().
   writeUnsignedLong(int v) {
     ByteData d = ByteData(8)..setUint64(0, v);
     _dest.add(d.buffer.asUint8List());
