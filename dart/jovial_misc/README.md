@@ -1,5 +1,5 @@
 Miscellaneous small-ish bits of Dart code.  It's mostly for my own
-use, buy you're welcome to it.  Please to attribute it if you do, e.g.
+use, buy you're welcome to it.  Please attribute it if you do, e.g.
 with a link to https://jovial.com/bill.html.  Offered under
 the [MIT license](./LICENSE.txt).
 
