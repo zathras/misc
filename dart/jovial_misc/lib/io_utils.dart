@@ -98,14 +98,14 @@ class DataInputStream {
     }
     await _ensureNext();
     if (_pos + num <= _curr.length) {
-      final Uint8List result = _curr.sublist(_pos, _pos + num);
+      final result = _curr.sublist(_pos, _pos + num);
       _pos += num;
       return result;
     } else {
       final len = _curr.length - _pos;
       assert(len > 0 && len < num);
       final result = Uint8List(num);
-      final Uint8List buf = await readBytes(len);
+      final buf = await readBytes(len);
       result.setRange(0, len, buf);
       final buf2 = await readBytes(num - len);
       result.setRange(len, num, buf2);
@@ -126,14 +126,14 @@ class DataInputStream {
       _pos = _curr.length;
       return _curr;
     } else if (_pos + num <= _curr.length) {
-      final Uint8List result = _curr.sublist(_pos, _pos + num);
+      final result = _curr.sublist(_pos, _pos + num);
       _pos += num;
       return result;
     } else {
       final len = _curr.length - _pos;
       assert(len > 0 && len < num);
       final result = Uint8List(num);
-      Uint8List buf = await readBytes(len);
+      var buf = await readBytes(len);
       result.setRange(0, len, buf);
       buf = await readBytes(num - len);
       result.setRange(len, num, buf);
@@ -266,8 +266,8 @@ class DataInputStream {
   ///
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   Future<String> readUTF8() async {
-    int len = await readUnsignedShort();
-    Uint8List bytes = await readBytesImmutable(len);
+    final len = await readUnsignedShort();
+    final bytes = await readBytesImmutable(len);
     return utf8Decoder.convert(bytes);
   }
 
@@ -292,16 +292,16 @@ class DataInputStream {
   /// obtained from this method can be fed into another DataInputStream.
   Stream<Uint8List> debugStream() async* {
     while (true) {
-      int a = await read();
+      final a = await read();
       if (a == -1) {
         break; // EOF, so bail
       }
-      int b = await read();
+      final b = await read();
       if (b == -1) {
         yield Uint8List.fromList([a]);
         break;
       }
-      int c = await read();
+      final c = await read();
       if (c == -1) {
         yield Uint8List.fromList([a, b]);
         break;
@@ -345,7 +345,7 @@ class ByteBufferDataInputStream {
   final Uint8List _source;
   final ByteData _asByteData;
   int _pos = 0;
-  static const utf8Decoder = const Utf8Decoder(allowMalformed: true);
+  static const utf8Decoder = Utf8Decoder(allowMalformed: true);
 
   ByteBufferDataInputStream._raw(this._source, this._asByteData);
 
@@ -375,7 +375,7 @@ class ByteBufferDataInputStream {
     if (_pos + num > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final Uint8List result = _source.sublist(_pos, _pos + num);
+      final result = _source.sublist(_pos, _pos + num);
       _pos += num;
       return result;
     }
@@ -493,8 +493,8 @@ class ByteBufferDataInputStream {
   ///
   /// Throws EOFException if EOF is reached before the needed bytes are read.
   String readUTF8() {
-    int len = readUnsignedShort();
-    Uint8List bytes = readBytesImmutable(len);
+    final len = readUnsignedShort();
+    final bytes = readBytesImmutable(len);
     return utf8Decoder.convert(bytes);
   }
 
@@ -550,39 +550,39 @@ class DataOutputSink {
   }
 
   /// Writes a 2 byte signed short in big-endian format.
-  writeShort(int v) {
-    ByteData d = ByteData(2)..setInt16(0, v);
+  void writeShort(int v) {
+    final d = ByteData(2)..setInt16(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
   /// Writes a 2 byte unsigned short in big-endian format.
-  writeUnsignedShort(int v) {
-    ByteData d = ByteData(2)..setUint16(0, v);
+  void writeUnsignedShort(int v) {
+    final d = ByteData(2)..setUint16(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
   /// Writes a 4 byte int in big-endian format.
-  writeInt(int v) {
-    ByteData d = ByteData(4)..setInt32(0, v);
+  void writeInt(int v) {
+    final d = ByteData(4)..setInt32(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
   /// Writes a 4 byte unsigned int in big-endian format.
-  writeUnsignedInt(int v) {
-    ByteData d = ByteData(4)..setUint32(0, v);
+  void writeUnsignedInt(int v) {
+    final d = ByteData(4)..setUint32(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
   /// Writes an 8 byte long int in big-endian format.
-  writeLong(int v) {
-    ByteData d = ByteData(8)..setInt64(0, v);
+  void writeLong(int v) {
+    final d = ByteData(8)..setInt64(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
-  /// Writes an unsigned 8 byte long in big-endian format.  Converts a Dart 
+  /// Writes an unsigned 8 byte long in big-endian format.  Converts a Dart
   /// int according to the semantics of ByteData.setUint64().
-  writeUnsignedLong(int v) {
-    ByteData d = ByteData(8)..setUint64(0, v);
+  void writeUnsignedLong(int v) {
+    final d = ByteData(8)..setUint64(0, v);
     _dest.add(d.buffer.asUint8List());
   }
 
@@ -594,8 +594,8 @@ class DataOutputSink {
   ///
   /// Throws an ArgumentError if the encoded string length doesn't fit
   /// in an unsigned short.
-  writeUTF8(String s) {
-    Uint8List utf8 = (const Utf8Encoder()).convert(s);
+  void writeUTF8(String s) {
+    final utf8 = (const Utf8Encoder()).convert(s);
     if (utf8.length > 0xffffffff) {
       throw ArgumentError(
           'Byte length ${utf8.length} exceeds maximum of ${0xffffffff}');
@@ -604,7 +604,7 @@ class DataOutputSink {
     _dest.add(utf8);
   }
 
-  close() {
+  void close() {
     _dest.close();
   }
 }
@@ -621,24 +621,23 @@ class DecryptingStream extends DelegatingStream<Uint8List> {
 
   static Stream<Uint8List> _generate(
       BlockCipher cipher, DataInputStream input, Padding padding) async* {
-    final int bs = cipher.blockSize;
+    final bs = cipher.blockSize;
     while (true) {
-      int len = max(((await input.bytesAvailable) ~/ bs) * bs, bs);
+      final len = max(((await input.bytesAvailable) ~/ bs) * bs, bs);
       // A well-formed encrypted stream will have at least one block,
       // due to padding, and its length will be evenly divisible by the
       // block size.  A well-formed encrypted stream will therefore never
       // generate an EOF in the following line.
-      final Uint8List cipherText = await input.readBytesImmutable(len);
-      final Uint8List plainText = Uint8List(len);
-      for (int i = 0; i < len; i += bs) {
+      final cipherText = await input.readBytesImmutable(len);
+      final plainText = Uint8List(len);
+      for (var i = 0; i < len; i += bs) {
         cipher.processBlock(cipherText, i, plainText, i);
       }
       if (await input.isEOF()) {
         final padBytes = padding.padCount(plainText.sublist(len - bs, len));
         if (padBytes < plainText.length) {
           // If not all padding
-          Uint8List noPad = plainText.sublist(0, plainText.length - padBytes);
-          yield noPad;
+          yield plainText.sublist(0, plainText.length - padBytes);
         }
         break;
       } else {
@@ -661,14 +660,14 @@ class EncryptingSink implements Sink<List<int>> {
   bool _closed = false;
 
   EncryptingSink(this._cipher, this._dest, this._padding)
-      : _lastPlaintext = Uint8List(_cipher.blockSize) {}
+      : _lastPlaintext = Uint8List(_cipher.blockSize);
 
   @override
   void close() {
     assert(!_closed);
-    final int bs = _cipher.blockSize;
+    final bs = _cipher.blockSize;
     if (_lastPlaintextPos > 0) {
-      for (int i = _lastPlaintextPos; i < bs; i++) {
+      for (var i = _lastPlaintextPos; i < bs; i++) {
         _lastPlaintext[i] = 0;
       }
     }
@@ -680,12 +679,12 @@ class EncryptingSink implements Sink<List<int>> {
 
   @override
   void add(List<int> data) {
-    final int bs = _cipher.blockSize;
+    final bs = _cipher.blockSize;
 
     // Deal with any pending bytes
-    int fromPos = 0;
+    var fromPos = 0;
     {
-      final int total = _lastPlaintextPos + data.length;
+      final total = _lastPlaintextPos + data.length;
       if (total < bs) {
         _lastPlaintext.setRange(_lastPlaintextPos, total, data);
         _lastPlaintextPos = total;
@@ -701,7 +700,7 @@ class EncryptingSink implements Sink<List<int>> {
       return; // No more to do
     }
 
-    final int toEmit = ((data.length - fromPos) ~/ bs) * bs;
+    final toEmit = ((data.length - fromPos) ~/ bs) * bs;
     _emit(data, fromPos, toEmit);
     fromPos += toEmit;
 
@@ -718,15 +717,14 @@ class EncryptingSink implements Sink<List<int>> {
   }
 
   void _emit(List<int> block, int offset, int len) {
-    final int bs = _cipher.blockSize;
+    final bs = _cipher.blockSize;
     assert(len % bs == 0);
     if (len == 0) {
       return;
     }
-    final Uint8List block8 =
-        (block is Uint8List) ? block : Uint8List.fromList(block);
-    final Uint8List out = Uint8List(len);
-    for (int i = 0; i < out.length; i += bs) {
+    final block8 = (block is Uint8List) ? block : Uint8List.fromList(block);
+    final out = Uint8List(len);
+    for (var i = 0; i < out.length; i += bs) {
       _cipher.processBlock(block8, i + offset, out, i);
     }
     _dest.add(out);

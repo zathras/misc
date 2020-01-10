@@ -159,7 +159,7 @@ class _IsolateStreamGenerator<T, A> {
     }
     _isolate = await Isolate.spawn<_IsolateArgs>(runner, args,
         onExit: isolateExit.sendPort,
-        debugName: '${this.runtimeType}',
+        debugName: '${runtimeType}',
         errorsAreFatal: true);
     if (_killedWith != null) {
       _isolate.kill(priority: _killedWith);
@@ -181,16 +181,14 @@ class _IsolateStreamGenerator<T, A> {
         yield v as T;
       }
     }
-    final done = await isolateExit.first;
+    await isolateExit.first;
     isolateExit.close();
     isolateResults.close();
   }
 
   /// See the documentation for IsolateStream.kill(int).
   void kill(int priority) {
-    if (priority == null) {
-      priority = Isolate.beforeNextEvent;
-    }
+    priority ??= Isolate.beforeNextEvent;
     _killedWith = priority;
     // Record the priority in case _isolate is null -- see _generate().
     if (_isolate != null) {
@@ -331,7 +329,7 @@ class _SendPortAdapter<T> implements Sink<T> {
 
   @override
   void close() {
-    _port.send(_eof);   // This generates a return ack
+    _port.send(_eof); // This generates a return ack
     _acksSent++;
   }
 
@@ -349,7 +347,7 @@ class _SendPortAdapter<T> implements Sink<T> {
   }
 }
 
-/// A convenience implementation of the common case of an 
+/// A convenience implementation of the common case of an
 // IsolateStream<Uint8List>.
 /// This can be useful for generating a stream that is large -- many GB, or
 /// even more -- that appears to come from a file or a socket.  Because it
