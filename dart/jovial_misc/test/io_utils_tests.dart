@@ -3,7 +3,6 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:test/test.dart';
@@ -229,67 +228,114 @@ void add_io_utils_tests() {
   }
 
   //
-  // Test all the different data types
-  test('Data[Input|Output]Stream all methods', () async {
+  // Test all the different data types for DataInputStream/
+  // DataOutputSink
+  //
+  for (var endian in [Endian.big, Endian.little]) {
+    const iterations = 100;
+    // We do several iterations to make sure that we catch all of the
+    // code paths in DataInputStream.  Note the use of
+    // DataInputStream.debugStream.
+    final name = (endian == Endian.big) ? 'big endian' : 'little endian';
+    // Endian really should override toString to do this
+    test('Data[Input|Output]Stream all methods, $name', () async {
+      final acc = AccumulatorSink<Uint8List>();
+      final out = DataOutputSink(acc, endian);
+      for (var i = 0; i < iterations; i++) {
+        final numExtraBytes = rand.nextInt(3);
+        out.writeUnsignedShort(numExtraBytes);
+        out.writeBytes(Uint8List(numExtraBytes));
+        // We emit a random amount of space to catch all the code paths
+        // in DataOutputStream relating to buffer management.  See also
+        // the use of DataInputStream.debugStream().
+
+        out.writeBoolean(false);
+        out.writeByte(1);
+        out.writeBytes(const [2, 3]);
+        out.writeBytes(const [4, 5]);
+        out.writeShort(6);
+        out.writeUnsignedShort(7);
+        out.writeInt(8);
+        out.writeUnsignedInt(9);
+        out.writeLong(10);
+        out.writeUnsignedLong(11);
+        out.writeUTF8('zero X zero C');
+        out.writeFloat(13.3);
+        out.writeDouble(14.4);
+        out.writeBytes(const <int>[]);
+      }
+      out.close();
+
+      final equals = ListEquality<int>().equals;
+      final allBytes =
+          acc.events.fold(ByteAccumulatorSink(), (a, b) => a..add(b)).bytes;
+      final dis = ByteBufferDataInputStream(allBytes, endian);
+      for (var i = 0; i < iterations; i++) {
+        final numExtraBytes = dis.readUnsignedShort();
+        dis.readBytes(numExtraBytes); // Thow them away
+        expect(dis.readBoolean(), false);
+        expect(dis.readByte(), 1);
+        expect(equals(dis.readBytes(2), const [2, 3]), true);
+        expect(equals(dis.readBytesImmutable(2), const [4, 5]), true);
+        expect(dis.readShort(), 6);
+        expect(dis.readUnsignedShort(), 7);
+        expect(dis.readInt(), 8);
+        expect(dis.readUnsignedInt(), 9);
+        expect(dis.readLong(), 10);
+        expect(dis.readUnsignedLong(), 11);
+        expect(dis.readUTF8(), 'zero X zero C');
+        expect((13.3 - dis.readFloat()).abs() < 0.00001, true);
+        expect(dis.readDouble(), 14.4);
+        expect(equals(dis.readBytes(0), const <int>[]), true);
+        expect(equals(dis.readBytesImmutable(0), const <int>[]), true);
+      }
+      expect(dis.isEOF(), true);
+      dis.close();
+
+      final dis2 = DataInputStream(
+          DataInputStream(Stream.fromIterable(acc.events)).debugStream(),
+          endian);
+      for (var i = 0; i < iterations; i++) {
+        final numExtraBytes = await dis2.readUnsignedShort();
+        await dis2.readBytes(numExtraBytes); // Thow them away
+        expect(await dis2.readBoolean(), false);
+        expect(await dis2.readByte(), 1);
+        expect(equals(await dis2.readBytes(2), const [2, 3]), true);
+        expect(equals(await dis2.readBytesImmutable(2), const [4, 5]), true);
+        expect(await dis2.readShort(), 6);
+        expect(await dis2.readUnsignedShort(), 7);
+        expect(await dis2.readInt(), 8);
+        expect(await dis2.readUnsignedInt(), 9);
+        expect(await dis2.readLong(), 10);
+        expect(await dis2.readUnsignedLong(), 11);
+        expect(await dis2.readUTF8(), 'zero X zero C');
+        expect((13.3 - await dis2.readFloat()).abs() < 0.00001, true);
+        expect(await dis2.readDouble(), 14.4);
+        expect(equals(dis.readBytes(0), const <int>[]), true);
+        expect(equals(dis.readBytesImmutable(0), const <int>[]), true);
+      }
+      expect(await dis2.isEOF(), true);
+      await dis2.close();
+    });
+  }
+
+  test('Data[Input|Output]Stream, endian mismatch', () async {
     final acc = AccumulatorSink<Uint8List>();
-    final out = DataOutputSink(acc);
-    out.writeBoolean(false);
-    out.writeByte(1);
-    out.writeBytes(const [2, 3]);
-    out.writeBytes(const [4, 5]);
-    out.writeShort(6);
-    out.writeUnsignedShort(7);
-    out.writeInt(8);
-    out.writeUnsignedInt(9);
-    out.writeLong(10);
-    out.writeUnsignedLong(11);
-    out.writeUTF8("zero X zero C");
-    out.writeBytes(const <int>[]);
-    out.close();
+    final out = DataOutputSink(acc, Endian.little);
+    out.writeUnsignedInt(0xdeadbeef);
+    out.close;
 
-    final equals = ListEquality<int>().equals;
-    final allBytes =
-        acc.events.fold(ByteAccumulatorSink(), (a, b) => a..add(b)).bytes;
-    final dis = ByteBufferDataInputStream(allBytes);
-    expect(dis.readBoolean(), false);
-    expect(dis.readByte(), 1);
-    expect(equals(dis.readBytes(2), const [2, 3]), true);
-    expect(equals(dis.readBytesImmutable(2), const [4, 5]), true);
-    expect(dis.readShort(), 6);
-    expect(dis.readUnsignedShort(), 7);
-    expect(dis.readInt(), 8);
-    expect(dis.readUnsignedInt(), 9);
-    expect(dis.readLong(), 10);
-    expect(dis.readUnsignedLong(), 11);
-    expect(dis.readUTF8(), "zero X zero C");
-    expect(equals(dis.readBytes(0), const <int>[]), true);
-    expect(equals(dis.readBytesImmutable(0), const <int>[]), true);
-    expect(dis.isEOF(), true);
-    dis.close();
-
-    final dis2 = DataInputStream(Stream.fromIterable(acc.events));
-    expect(await dis2.readBoolean(), false);
-    expect(await dis2.readByte(), 1);
-    expect(equals(await dis2.readBytes(2), const [2, 3]), true);
-    expect(equals(await dis2.readBytesImmutable(2), const [4, 5]), true);
-    expect(await dis2.readShort(), 6);
-    expect(await dis2.readUnsignedShort(), 7);
-    expect(await dis2.readInt(), 8);
-    expect(await dis2.readUnsignedInt(), 9);
-    expect(await dis2.readLong(), 10);
-    expect(await dis2.readUnsignedLong(), 11);
-    expect(await dis2.readUTF8(), "zero X zero C");
-    expect(equals(dis.readBytes(0), const <int>[]), true);
-    expect(equals(dis.readBytesImmutable(0), const <int>[]), true);
-    expect(await dis2.isEOF(), true);
-    await dis2.close();
+    final dis = DataInputStream(Stream.fromIterable(acc.events));
+    expect(await dis.readUnsignedInt(), 0xefbeadde);
+    expect(await dis.isEOF(), true);
+    await dis.close();
   });
 
   // Create an isolate so we can stream data through
   // encryption/decryption without buffering it all in memory.  These
   // tests are randomized, so I run a fair number of iterations.
   test('stream test 5', () => bigTest(rand, 5));
-  for (int i = 0; i < 100; i++) {
+  for (var i = 0; i < 100; i++) {
     test('stream test 250 $i', () => bigTest(rand, 250));
   }
   test('stream test 25000', () => bigTest(rand, 25000));

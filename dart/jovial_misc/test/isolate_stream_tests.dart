@@ -2,15 +2,7 @@
 /// to a test harness by calling add_isolate_stream_tests().
 
 import 'dart:async';
-import 'dart:io';
-import 'dart:isolate';
-import 'dart:math';
-import 'dart:typed_data';
 import 'package:test/test.dart';
-import 'package:collection/collection.dart';
-import 'package:convert/convert.dart';
-import 'package:intl/intl.dart';
-import 'package:pointycastle/export.dart';
 
 import 'package:jovial_misc/isolate_stream.dart';
 
@@ -35,7 +27,7 @@ void add_isolate_stream_tests() {
   test('small IsolateStream - Iterator', () async {
     final testData = ['hello', 'isolate', 'world', 'five', 'elements'];
     print('testing $testData');
-    IsolateStream<String, List<String>> str = IsolateStream(
+    var str = IsolateStream<String, List<String>>(
         _generateStringIterator, testData, _stringSize,
         maxBuf: 1);
     final ti = testData.iterator;
@@ -50,7 +42,7 @@ void add_isolate_stream_tests() {
   test('small IsolateStream - StreamIterator', () async {
     final testData = ['hello', 'isolate', 'world', 'five', 'elements'];
     print('testing $testData');
-    IsolateStream<String, List<String>> str = IsolateStream.fromStreamIterator(
+    var str = IsolateStream<String, List<String>>.fromStreamIterator(
         _generateStringStreamIterator, testData, _stringSize,
         maxBuf: 4);
     final ti = testData.iterator;
@@ -65,7 +57,7 @@ void add_isolate_stream_tests() {
   test('small IsolateStream - Sink', () async {
     final testData = ['hello', 'isolate', 'world', 'five', 'elements'];
     print('testing $testData');
-    IsolateStream<String, List<String>> str = IsolateStream.fromSink(
+    var str = IsolateStream<String, List<String>>.fromSink(
         _generateStringSink, testData, _stringSize,
         maxBuf: 4);
     final ti = testData.iterator;
