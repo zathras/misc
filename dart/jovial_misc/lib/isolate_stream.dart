@@ -91,8 +91,9 @@ class IsolateStream<T, A> extends DelegatingStream<T> {
       Future<void> Function(A, IsolateGeneratorSink<dynamic>) generator)
       : super(_isolateManager.generateFromSink(generator));
 
-  /// Request our generating to shut down, by calling [Isolate.kill] with the
-  /// given argument.  This should not normally be necessary, but it may be
+  /// Request our generating funciton to shut down, by calling 
+  /// [Isolate.kill] with the given argument.  This should not 
+  /// normally be necessary, but it may be
   /// useful to clean up under exceptional circumstances.
   void kill({int priority = Isolate.beforeNextEvent}) =>
       _isolateManager.kill(priority);
