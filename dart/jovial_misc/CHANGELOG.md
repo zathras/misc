@@ -24,3 +24,7 @@
 - Made the unintentionally public DataInputStream.utf8Decoder
   into a private value.
 - Documentation improvements.
+
+## 0.2.1
+
+- Fix typo in README
