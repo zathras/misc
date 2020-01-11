@@ -22,7 +22,7 @@ Future<void> data_io_stream_example() async {
 }
 
 ///
-/// Example of [IslateStream] to run a computationally-intensive
+/// Example of using [IsolateStream] to run a computationally-intensive
 /// generator function in an isolate.  We use FizzBuzz as a
 /// stand-in for a computationally intensive series of values.
 ///
