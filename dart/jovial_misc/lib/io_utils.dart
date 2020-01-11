@@ -219,7 +219,7 @@ class DataInputStream {
     return _curr[_pos++];
   }
 
-  /// Reads and returns a signed byte.  No sign extension is done.
+  /// Reads a signed byte.  Returns an `int` between -128 and 127, inclusive.
   ///
   /// Throws EOFException if EOF is reached before the needed byte is read.
   Future<int> readByte() async {
@@ -495,7 +495,7 @@ class ByteBufferDataInputStream {
     }
   }
 
-  /// Reads and returns a signed byte.  No sign extension is done.
+  /// Reads a signed byte.  Returns an `int` between -128 and 127, inclusive.
   ///
   /// Throws [EOFException] if EOF is reached before the needed byte is read.
   int readByte() {

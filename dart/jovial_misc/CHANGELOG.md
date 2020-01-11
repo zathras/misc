@@ -25,6 +25,6 @@
   into a private value.
 - Documentation improvements.
 
-## 0.2.1, 0.2.2
+## 0.2.1, 0.2.2, 0.2.3
 
-- Fix typo in README
+- Documentation improvements
