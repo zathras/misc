@@ -115,12 +115,11 @@ class _GeneratorArgs {
 
 /// The function called by the Isolate in bigTest, above.
 Future<void> _generateBigTest(
-    _GeneratorArgs args, IsolateGeneratorSink<dynamic> destination) async {
+    _GeneratorArgs args, IsolateGeneratorSink<Uint8List> destination) async {
   final rand = Random(args.randomSeed);
   final encryptCipher = CBCBlockCipher(AESFastEngine())
     ..init(true, ParametersWithIV(KeyParameter(args.key), args.iv));
-  final encrypt = EncryptingSink(encryptCipher,
-      IsolateGeneratorSink<Uint8List>.fromDynamic(destination), PKCS7Padding());
+  final encrypt = EncryptingSink(encryptCipher, destination, PKCS7Padding());
   final ds = DataOutputSink(encrypt);
   var bytesWritten = 0;
   for (var i = 0; i < args.numItems; i++) {

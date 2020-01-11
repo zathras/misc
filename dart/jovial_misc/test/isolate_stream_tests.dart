@@ -12,8 +12,7 @@ StreamIterator<String> _generateStringStreamIterator(List<String> arg) =>
     StreamIterator<String>(Stream.fromIterable(arg));
 
 Future<void> _generateStringSink(
-    List<String> arg, IsolateGeneratorSink<dynamic> rawDest) async {
-  var dest = IsolateGeneratorSink<String>.fromDynamic(rawDest);
+    List<String> arg, IsolateGeneratorSink<String> dest) async {
   for (var s in arg) {
     dest.add(s);
     await dest.flushIfNeeded();

@@ -6,19 +6,19 @@
 /// ```
 /// /// Illustration of IsolateStream, using FizzBuzz as
 /// /// a stand-in for a computationally intensive series
-/// 
+///
 /// import 'dart:async';
 /// import 'package:intl/intl.dart';
 /// import 'package:jovial_misc/isolate_stream.dart';
-/// 
+///
 /// final fmt = NumberFormat();
-/// 
+///
 /// void main() async {
 ///   final max = 1000000000;
 ///   const iterationPause = Duration(milliseconds: 250);
 ///   print('Generating FizzBuzz sequence up to ${fmt.format(max)}');
-/// 
-///   final stream = IsolateStream.fromSink(_generator, max, _sizeOf, 
+///
+///   final stream = IsolateStream.fromSink(_generator, max, _sizeOf,
 ///       maxBuf: 30);
 ///   // Our stream will be limited to 30 strings in the buffer at a time.
 ///   for (var iter = StreamIterator(stream); await iter.moveNext();) {
@@ -28,13 +28,11 @@
 ///   // Note that the producer doesn't run too far ahead of the consumer,
 ///   // because the buffer is limited to 30 strings.
 /// }
-/// 
+///
 /// // The generator function that runs in a separate isolate:
-/// Future<void> _generator(int max, IsolateGeneratorSink<dynamic> sinkArg)
+/// Future<void> _generator(int max, IsolateGeneratorSink<String> sink)
 ///     async {
-///   // Keep our sink type-safe:
-///   final sink = IsolateGeneratorSink<String>.fromDynamic(sinkArg);
-/// 
+///
 ///   for (var i = 1; i <= max; i++) {
 ///     var result = '';
 ///     if (i % 3 == 0) {
@@ -54,7 +52,7 @@
 ///     await sink.flushIfNeeded();
 ///   }
 /// }
-/// 
+///
 /// // The sizeOf function, in the same units as maxBuf.  This tells us how
 /// // many strings are in a string, in our case.
 /// int _sizeOf(String s) => 1;
@@ -141,7 +139,7 @@ class IsolateStream<T, A> extends DelegatingStream<T> {
   /// See also [IsolateGeneratorSink.flushIfNeeded].  Failure to call this
   /// regularly could result in unconstrained buffer growth.
   IsolateStream.fromSink(
-      Future<void> Function(A, IsolateGeneratorSink<dynamic>) generator,
+      Future<void> Function(A, IsolateGeneratorSink<T>) generator,
       A generatorArg,
       int Function(T value) sizeOf,
       {int maxBuf})
@@ -150,11 +148,11 @@ class IsolateStream<T, A> extends DelegatingStream<T> {
             generator);
 
   IsolateStream._fromSink(this._isolateManager,
-      Future<void> Function(A, IsolateGeneratorSink<dynamic>) generator)
+      Future<void> Function(A, IsolateGeneratorSink<T>) generator)
       : super(_isolateManager.generateFromSink(generator));
 
-  /// Request our generating funciton to shut down, by calling 
-  /// [Isolate.kill] with the given argument.  This should not 
+  /// Request our generating funciton to shut down, by calling
+  /// [Isolate.kill] with the given argument.  This should not
   /// normally be necessary, but it may be
   /// useful to clean up under exceptional circumstances.
   void kill({int priority = Isolate.beforeNextEvent}) =>
@@ -184,6 +182,7 @@ class _IsolateStreamGenerator<T, A> {
   _IsolateArgs _makeArgs(Function generator) => _IsolateArgs(
       generator,
       _generatorArg,
+      IsolateGeneratorSink<T>._constructor(),
       isolateResults.sendPort,
       _ackEvery,
       ackPortGetter.sendPort,
@@ -199,7 +198,7 @@ class _IsolateStreamGenerator<T, A> {
   }
 
   Stream<T> generateFromSink(
-          Future<void> Function(A, IsolateGeneratorSink<dynamic>) generator) =>
+          Future<void> Function(A, IsolateGeneratorSink<T>) generator) =>
       _generate(generator, _runSinkInIsolate);
 
   Stream<T> _generate(Function generator, Function runner) async* {
@@ -282,10 +281,11 @@ class _IsolateStreamGenerator<T, A> {
 
   static void _runSinkInIsolate(_IsolateArgs args) async {
     var dest = _initializeRun(args);
-    var sink = IsolateGeneratorSink<dynamic>._fromAdapter(dest);
-    await args.generator(args.generatorArg, sink);
-    assert(sink.closed); // The generator should close the sink
-    sink.close(); //  In case it didn't.  This ensures dest.close() is called.
+    args.sink._dest = dest;
+    await args.generator(args.generatorArg, args.sink);
+    assert(args.sink.closed); // The generator should close the sink
+    args.sink.close();
+    //  In case it didn't.  This ensures dest.close() is called.
     await dest.waitForAcks(0);
     Isolate.current.kill();
   }
@@ -294,20 +294,11 @@ class _IsolateStreamGenerator<T, A> {
 /// The sink returned by the generating function given to
 /// [IsolateStream.fromSink].
 class IsolateGeneratorSink<T> implements Sink<T> {
-  final _SendPortAdapter _dest;
+  _SendPortAdapter _dest;
   bool _closed = false;
   bool get closed => _closed;
-  final IsolateGeneratorSink<dynamic> _delegatee; // can be  null
 
-  IsolateGeneratorSink._fromAdapter(_SendPortAdapter dest)
-      : this._raw(dest, null);
-
-  /// Create a typed sink from a dynamic one.  This can be useful within
-  /// a client's generator function.
-  IsolateGeneratorSink.fromDynamic(IsolateGeneratorSink<dynamic> delegatee)
-      : this._raw(delegatee._dest, delegatee);
-
-  IsolateGeneratorSink._raw(this._dest, this._delegatee);
+  IsolateGeneratorSink._constructor();
 
   @override
   void add(T data) {
@@ -326,11 +317,7 @@ class IsolateGeneratorSink<T> implements Sink<T> {
   @override
   void close() {
     if (!_closed) {
-      if (_delegatee != null) {
-        _delegatee.close();
-      } else {
-        _dest.close();
-      }
+      _dest.close();
       _closed = true;
     }
   }
@@ -341,6 +328,7 @@ class IsolateGeneratorSink<T> implements Sink<T> {
 class _IsolateArgs {
   final Function generator;
   final dynamic generatorArg;
+  final IsolateGeneratorSink sink;
   final SendPort port;
   final int ackEvery;
   final SendPort ackPortPort; // The port over which we send the ack port
@@ -348,8 +336,8 @@ class _IsolateArgs {
   final ack = Capability();
   final eof = Capability();
 
-  _IsolateArgs(this.generator, this.generatorArg, this.port, this.ackEvery,
-      this.ackPortPort, this.sizeOf);
+  _IsolateArgs(this.generator, this.generatorArg, this.sink, this.port,
+      this.ackEvery, this.ackPortPort, this.sizeOf);
 }
 
 /// And adaptor to make our SendPort look like a Sink.  This coordinates
@@ -425,11 +413,12 @@ class Uint8ListIsolateStream<A> extends IsolateStream<Uint8List, A> {
             maxBuf: maxBuf);
 
   /// Create a stream from a generator function that feeds values to
-  /// an [IsolateGeneratorSink].  See also 
+  /// an [IsolateGeneratorSink].  See also
   /// [IsolateGeneratorSink.flushIfNeeded].  Failure to call this
   /// regularly could result in unconstrained buffer growth.
   Uint8ListIsolateStream.fromSink(
-      Future<void> Function(A, IsolateGeneratorSink) generator, A generatorArg,
+      Future<void> Function(A, IsolateGeneratorSink<Uint8List>) generator,
+      A generatorArg,
       {int maxBuf})
       : super.fromSink(generator, generatorArg, _sizeOf, maxBuf: maxBuf);
 

@@ -28,3 +28,7 @@
 ## 0.2.1, 0.2.2, 0.2.3
 
 - Documentation improvements
+
+## 0.3.0
+
+- Improved IsolateStreamGenerator.fromSink API to make it type-safe.
