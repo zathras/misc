@@ -1,4 +1,26 @@
-/// Miscellaneous I/O utilities.
+/// Miscellaneous I/O utilities.  This includes reading and writing binary
+/// data in a way that's interoperable with `java.io.DataInputStream` and
+/// `java.io.DataOutputStream`, and support for using Pointycastle to
+/// encrypt or decrypt a stream of data, somewhat like
+/// `javax.crytpo.CipherInputStream` and `javax.crypto.CypherOutputStream`.
+/// ```
+/// ///
+/// /// Example of using [DataOutputSink] and [DataInputStream] to
+/// /// encode values that are compatible with `java.io.DataInputStream`
+/// /// and `java.io.DataOutputStream`
+/// ///
+/// Future<void> data_io_stream_example() async {
+///   final acc = ByteAccumulatorSink();
+///   final out = DataOutputSink(acc);
+///   out.writeUTF8('Hello, world.');
+///   out.close();
+///
+///   final stream = Stream<List<int>>.fromIterable([acc.bytes]);
+///   final dis = DataInputStream(stream);
+///   print(await dis.readUTF8());
+///   await dis.close();
+/// }
+/// ```
 
 library io_utils;
 
@@ -21,7 +43,7 @@ class EOFException implements IOException {
   }
 }
 
-/// `DataInputStream` is a coroutines-style wrapper around a
+/// A coroutines-style wrapper around a
 /// `Stream<List<int>>`, like you get from a socket or a file in Dart.
 /// This lets you asynchronously read a stream using an API much like
 /// `java.io.DataInputStream`.
@@ -34,7 +56,7 @@ class EOFException implements IOException {
 ///
 /// See also [ByteBufferDataInputStream].
 class DataInputStream {
-  // This class iterates through the provided Stream<List<int>> directly,
+  // Iterates through the provided Stream<List<int>> directly,
   // and buffers by hanging onto a Uint8List  until it's been completely
   // read.  I suppose I could have based this off of quiver's
   // StreamBuffer class, but as the great Japanese philosopher
@@ -45,9 +67,13 @@ class DataInputStream {
   static const _utf8Decoder = Utf8Decoder(allowMalformed: true);
 
   /// The current endian setting, either [Endian.big] or [Endian.little].
-  /// This is used for converting numeric types.
+  /// This is used for converting numeric types.  Choose [Endian.big]
+  /// for interoperability with `java.io.DataInputStream`.
   Endian endian;
 
+  /// Create a stream that takes its data from source with the given
+  /// initial [endian] setting.  Choose [Endian.big]
+  /// for interoperability with `java.io.DataInputStream`.
   DataInputStream(Stream<List<int>> source, [this.endian = Endian.big])
       : _source = StreamIterator<List<int>>(source);
 
@@ -214,17 +240,17 @@ class DataInputStream {
   /// Reads and returns an unsigned byte.
   ///
   /// Throws [EOFException] if EOF is reached before the needed byte is read.
-  Future<int> readUnisgnedByte() async {
+  Future<int> readUnsignedByte() async {
     await _ensureNext();
     return _curr[_pos++];
   }
 
   /// Reads a signed byte.  Returns an `int` between -128 and 127, inclusive.
+  /// See also [readUnsignedByte].
   ///
   /// Throws EOFException if EOF is reached before the needed byte is read.
   Future<int> readByte() async {
-    await _ensureNext();
-    final b = _curr[_pos++];
+    final b = await readUnsignedByte();
     if (b & 0x80 != 0) {
       return b - 0x100;
     } else {
@@ -378,9 +404,9 @@ class DataInputStream {
   }
 }
 
-/// [ByteBufferDataInputStream] is a wrapper around a [ByteBuffer]
-/// instance.  This lets you synchronously read typed binary data from a byte
-/// array, much like `java.io.DataInputStream` over a `ByteArrayInputStream`.
+/// A wrapper around a [ByteBuffer] instance, for synchronous reading
+/// of typed binary data from a byte array.  This is similar to a
+/// `java.io.DataInputStream` over a `java.io.ByteArrayInputStream`.
 ///
 /// See also [DataInputStream]
 class ByteBufferDataInputStream {
@@ -390,9 +416,13 @@ class ByteBufferDataInputStream {
   static const _utf8Decoder = Utf8Decoder(allowMalformed: true);
 
   /// The current endian setting, either [Endian.big] or [Endian.little].
-  /// This is used for converting numeric types.
+  /// This is used for converting numeric types.  Choose [Endian.big]
+  /// for interoperability with `java.io.DataInputStream`.
   Endian endian;
 
+  /// Create a stream that takes its data from source with the given
+  /// initial [endian] setting.  Choose [Endian.big]
+  /// for interoperability with `java.io.DataInputStream`.
   ByteBufferDataInputStream(Uint8List source, [this.endian = Endian.big])
       : _source = source,
         _asByteData = source.buffer.asByteData();
@@ -496,6 +526,7 @@ class ByteBufferDataInputStream {
   }
 
   /// Reads a signed byte.  Returns an `int` between -128 and 127, inclusive.
+  /// See also [readUnsignedByte].
   ///
   /// Throws [EOFException] if EOF is reached before the needed byte is read.
   int readByte() {
@@ -611,9 +642,13 @@ class DataOutputSink {
   final Sink<List<int>> _dest;
 
   /// The current endian setting, either [Endian.big] or [Endian.little].
-  /// This is used for converting numeric types.
+  /// This is used for converting numeric types.  Choose [Endian.big]
+  /// for interoperability with `java.io.DataOutputStream`.
   Endian endian;
 
+  /// Create a sink that sends its data to dest with the given
+  /// initial [endian] setting.  Choose [Endian.big]
+  /// for interoperability with `java.io.DataOutputStream`.
   DataOutputSink(this._dest, [this.endian = Endian.big]);
 
   /// Write the low 8 bits of the given integer as a single byte.
@@ -713,6 +748,7 @@ class DataOutputSink {
 
 /// A wrapper around a [DataInputStream] that decrypts using
 /// a Pointycastle [BlockCipher], resulting in a `Stream<List<int>>`.
+/// This is functionally similar to `javax.crypto.CipherInputStream`.
 class DecryptingStream extends DelegatingStream<Uint8List> {
   DecryptingStream(BlockCipher cipher, Stream<List<int>> input, Padding padding)
       : this.fromDataInputStream(cipher, DataInputStream(input), padding);
@@ -752,7 +788,8 @@ class DecryptingStream extends DelegatingStream<Uint8List> {
 /// A wrapper around a `Sink<List<int>>` that encrypts data using
 /// a Pointycastle [BlockCipher].  This sink needs to buffer to build
 /// up blocks that can be encrypted, so it's essential that [close()]
-/// be called.
+/// be called.  This is functionally similar to
+/// `javax.crypto.CipherOutputStream`
 class EncryptingSink implements Sink<List<int>> {
   final BlockCipher _cipher;
   final Sink<List<int>> _dest;

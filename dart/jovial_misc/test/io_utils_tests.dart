@@ -78,13 +78,9 @@ void bigTest(Random rand, int numItems) async {
   final key = _nextBytes(srand, 16);
   final iv = _nextBytes(srand, 16);
 
-  final generatorArgs =
-      _GeneratorArgs(srand.nextInt(1 << 32), key, iv, numItems);
   // ignore: omit_local_variable_types
-  final Stream<Uint8List> encrypted =
-      Uint8ListIsolateStream<_GeneratorArgs>.fromSink(
-          _generateBigTest, generatorArgs);
-
+  final Stream<Uint8List> encrypted = IsolateStream<Uint8List>(
+      _BigTestGenerator(rand.nextInt(1 << 32), key, iv, numItems));
   final decryptCipher = CBCBlockCipher(AESFastEngine())
     ..init(false, ParametersWithIV(KeyParameter(key), iv));
   final decrypt = DecryptingStream(decryptCipher, encrypted, PKCS7Padding());
@@ -104,40 +100,41 @@ void bigTest(Random rand, int numItems) async {
 
 final _numFmt = NumberFormat();
 
-class _GeneratorArgs {
-  final int randomSeed;
+class _BigTestGenerator extends IsolateByteStreamGenerator {
+  final int seed;
   final Uint8List key;
   final Uint8List iv;
   final int numItems;
 
-  _GeneratorArgs(this.randomSeed, this.key, this.iv, this.numItems);
-}
+  _BigTestGenerator(this.seed, this.key, this.iv, this.numItems);
 
-/// The function called by the Isolate in bigTest, above.
-Future<void> _generateBigTest(
-    _GeneratorArgs args, IsolateGeneratorSink<Uint8List> destination) async {
-  final rand = Random(args.randomSeed);
-  final encryptCipher = CBCBlockCipher(AESFastEngine())
-    ..init(true, ParametersWithIV(KeyParameter(args.key), args.iv));
-  final encrypt = EncryptingSink(encryptCipher, destination, PKCS7Padding());
-  final ds = DataOutputSink(encrypt);
-  var bytesWritten = 0;
-  for (var i = 0; i < args.numItems; i++) {
-    ds.writeLong(i);
-    var numBytes = rand.nextInt(2) == 0 ? rand.nextInt(34) : rand.nextInt(600);
-    ds.writeUnsignedInt(numBytes);
-    ds.writeBytes(Uint8List(numBytes));
-    bytesWritten += 12 + numBytes;
-    if (i % 10000 == 0) {
-      print('  Isolate wrote ${_numFmt.format(bytesWritten)} bytes so far.');
+  @override
+  Future<void> generate() async {
+    final rand = Random(seed);
+    final encryptCipher = CBCBlockCipher(AESFastEngine())
+      ..init(true, ParametersWithIV(KeyParameter(key), iv));
+    final encrypt = EncryptingSink(encryptCipher, this, PKCS7Padding());
+    final ds = DataOutputSink(encrypt);
+    var bytesWritten = 0;
+    for (var i = 0; i < numItems; i++) {
+      ds.writeLong(i);
+      var numBytes =
+          rand.nextInt(2) == 0 ? rand.nextInt(34) : rand.nextInt(600);
+      ds.writeUnsignedInt(numBytes);
+      ds.writeBytes(Uint8List(numBytes));
+      bytesWritten += 12 + numBytes;
+      if (i % 10000 == 0) {
+        print('  Isolate wrote ${_numFmt.format(bytesWritten)} bytes so far.');
+      }
+      await flushIfNeeded();
     }
-    await destination.flushIfNeeded();
+    ds.close();
+    print(
+        'Isolate generator done, wrote ${_numFmt.format(bytesWritten)} bytes.');
   }
-  ds.close();
-  print('Isolate generator done, wrote ${_numFmt.format(bytesWritten)} bytes.');
 }
 
-void add_io_utils_tests() {
+Future<void> add_io_utils_tests() async {
   final rand = Random(0x2a); // Give it a seed so any bugs are repeatable
 
   test('empty', () => _testStream(true, [[]]));
@@ -332,10 +329,11 @@ void add_io_utils_tests() {
 
   // Create an isolate so we can stream data through
   // encryption/decryption without buffering it all in memory.  These
-  // tests are randomized, so I run a fair number of iterations.
+  // tests are randomized, so we run a fair number of iterations.
   test('stream test 5', () => bigTest(rand, 5));
   for (var i = 0; i < 100; i++) {
     test('stream test 250 $i', () => bigTest(rand, 250));
   }
+  // And finally, run one with a larger amount of data.
   test('stream test 25000', () => bigTest(rand, 25000));
 }

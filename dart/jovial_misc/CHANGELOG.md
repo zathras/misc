@@ -31,4 +31,10 @@
 
 ## 0.3.0
 
-- Improved IsolateStreamGenerator.fromSink API to make it type-safe.
+- Improved IsolateStream.fromSink API to make it type-safe.
+
+## 0.4.0
+
+- Refactored IsolateStream to make the API more pleasing, by making
+  IsolateStreamGenerator<T> an abstract superclass for the client to
+  implement.

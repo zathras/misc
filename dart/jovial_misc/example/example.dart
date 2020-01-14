@@ -27,13 +27,13 @@ Future<void> data_io_stream_example() async {
 /// stand-in for a computationally intensive series of values.
 ///
 Future<void> isolate_stream_example() async {
-  final max = 1000000000;
+  const max = 25;
   final fmt = NumberFormat();
   const iterationPause = Duration(milliseconds: 250);
   print('Generating FizzBuzz sequence up to ${fmt.format(max)}');
 
-  final stream = IsolateStream.fromSink(_generator, max, _sizeOf, maxBuf: 30);
-  // Our stream will be limited to 30 strings in the buffer at a time.
+  final stream = IsolateStream(FizzBuzzGenerator(max));
+  // Our stream will be limited to 11 strings in the buffer at a time.
   for (var iter = StreamIterator(stream); await iter.moveNext();) {
     print(iter.current);
     await Future.delayed(iterationPause);
@@ -42,41 +42,41 @@ Future<void> isolate_stream_example() async {
   // because the buffer is limited to 30 strings.
 }
 
-// Two support functions for the isolate streams.  As fo this writing (January
-// 2020), these need to be top-level functions, and not closures, due to
-// current limitations in Dart's Isolate.  (There's no fundamental reason
-// why a lambda that holds no references to values on the heap can't be
-// passed to another isolate, so this restriction could theoretically be
-// lifted in future versions of Dart.  However, it's understandable why
-// the Dart designers have drawn a simple, bright line.)
+/// The generator that runs in a separate isolate.
+class FizzBuzzGenerator extends IsolateStreamGenerator<String> {
+  final int _max;
 
-// The generator function that runs in a separate isolate:
-Future<void> _generator(int max, IsolateGeneratorSink<String> sink) async {
-  for (var i = 1; i <= max; i++) {
-    var result = '';
-    if (i % 3 == 0) {
-      result = 'Fizz';
-    }
-    if (i % 5 == 0) {
-      result += 'Buzz';
-    }
-    if (result == '') {
-      sink.add(i.toString());
-    } else {
-      sink.add(result);
-    }
-    if (i % 25 == 0) {
-      print('        Generator is up to $i');
-    }
-    await sink.flushIfNeeded();
-    // If flushIfNeeded() weren't called, the generator would run without
-    // limit until the buffer between the isolates exceeded available memory.
+  FizzBuzzGenerator(this._max) {
+    print('FizzBuzzGenerator constructor.  Note that this only runs once.');
+    // This demonstrats that when FizzBuzzGenerator is sent to the other
+    // isolate, the receiving isolate does not run the constructor.
   }
-}
 
-// The sizeOf function, in the same units as maxBuf.  This tells us how
-// many strings are in a string, in our case.
-int _sizeOf(String s) => 1;
+  @override
+  Future<void> generate() async {
+    for (var i = 1; i <= _max; i++) {
+      var result = '';
+      if (i % 3 == 0) {
+        result = 'Fizz';
+      }
+      if (i % 5 == 0) {
+        result += 'Buzz';
+      }
+      print('        Generator sending $i $result');
+      if (result == '') {
+        await sendValue(i.toString());
+      } else {
+        await sendValue(result);
+      }
+    }
+  }
+
+  @override
+  int sizeOf(String value) => 1; // 1 entry
+
+  @override
+  int get bufferSize => 7; // Buffer up to 7 entries
+}
 
 ///
 /// Run the examples
