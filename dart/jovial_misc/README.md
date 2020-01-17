@@ -1,6 +1,6 @@
 Miscellaneous small-ish bits of Dart code.  It's mostly for my own
 use, but you're welcome to it.  Please attribute it if you do, e.g.
-with a link to https://jovial.com/bill.html.  Offered under
+with a link to https://bill.jovial.com/.  Offered under
 the [MIT license](https://opensource.org/licenses/MIT).
 
 Created from templates made available by Stagehand under a BSD-style

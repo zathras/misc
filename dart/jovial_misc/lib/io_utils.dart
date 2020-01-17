@@ -4,22 +4,24 @@
 /// encrypt or decrypt a stream of data, somewhat like
 /// `javax.crytpo.CipherInputStream` and `javax.crypto.CypherOutputStream`.
 /// ```
-/// ///
 /// /// Example of using [DataOutputSink] and [DataInputStream] to
 /// /// encode values that are compatible with `java.io.DataInputStream`
 /// /// and `java.io.DataOutputStream`
 /// ///
 /// Future<void> data_io_stream_example() async {
-///   final acc = ByteAccumulatorSink();
-///   final out = DataOutputSink(acc);
+///   final file = File.fromUri(Directory.systemTemp.uri.resolve('test.dat'));
+///   final flushable = FlushingIOSink(file.openWrite());
+///   final out = DataOutputSink(flushable);
 ///   out.writeUTF8('Hello, world.');
 ///   out.close();
+///   await flushable.done;
 ///
-///   final stream = Stream<List<int>>.fromIterable([acc.bytes]);
-///   final dis = DataInputStream(stream);
+///   final dis = DataInputStream(file.openRead());
 ///   print(await dis.readUTF8());
 ///   await dis.close();
+///   await file.delete();
 /// }
+
 /// ```
 
 library io_utils;
@@ -59,7 +61,8 @@ class DataInputStream {
   // Iterates through the provided Stream<List<int>> directly,
   // and buffers by hanging onto a Uint8List  until it's been completely
   // read.  I suppose I could have based this off of quiver's
-  // StreamBuffer class, but as the great Japanese philosopher
+  // StreamBuffer class, but it doesn't seem to handle checking for
+  // EOF.  Besides, as the great Japanese philosopher
   // Gudetama famously said, "meh."   (⊃◜⌓◝⊂)
   final StreamIterator<List<int>> _source;
   Uint8List _curr;
@@ -180,7 +183,7 @@ class DataInputStream {
       // Keep it simple
       return ByteData.view((await readBytes(4)).buffer).getInt32(0, endian);
     } else {
-      var result = ByteData.view(_curr.buffer).getInt32(_pos, endian);
+      final result = ByteData.view(_curr.buffer).getInt32(_pos, endian);
       _pos += 4;
       return result;
     }
@@ -197,7 +200,7 @@ class DataInputStream {
       // Keep it simple
       return ByteData.view((await readBytes(4)).buffer).getUint32(0, endian);
     } else {
-      var result = ByteData.view(_curr.buffer).getUint32(_pos, endian);
+      final result = ByteData.view(_curr.buffer).getUint32(_pos, endian);
       _pos += 4;
       return result;
     }
@@ -214,7 +217,7 @@ class DataInputStream {
       // Keep it simple
       return ByteData.view((await readBytes(2)).buffer).getUint16(0, endian);
     } else {
-      var result = ByteData.view(_curr.buffer).getUint16(_pos, endian);
+      final result = ByteData.view(_curr.buffer).getUint16(_pos, endian);
       _pos += 2;
       return result;
     }
@@ -231,7 +234,7 @@ class DataInputStream {
       // Keep it simple
       return ByteData.view((await readBytes(2)).buffer).getInt16(0, endian);
     } else {
-      var result = ByteData.view(_curr.buffer).getInt16(_pos, endian);
+      final result = ByteData.view(_curr.buffer).getInt16(_pos, endian);
       _pos += 2;
       return result;
     }
@@ -269,7 +272,7 @@ class DataInputStream {
       // Keep it simple
       return ByteData.view((await readBytes(8)).buffer).getInt64(0, endian);
     } else {
-      var result = ByteData.view(_curr.buffer).getInt64(_pos, endian);
+      final result = ByteData.view(_curr.buffer).getInt64(_pos, endian);
       _pos += 8;
       return result;
     }
@@ -287,7 +290,7 @@ class DataInputStream {
       // Keep it simple
       return ByteData.view((await readBytes(8)).buffer).getUint64(0, endian);
     } else {
-      var result = ByteData.view(_curr.buffer).getUint64(_pos, endian);
+      final result = ByteData.view(_curr.buffer).getUint64(_pos, endian);
       _pos += 8;
       return result;
     }
@@ -303,7 +306,7 @@ class DataInputStream {
       // Keep it simple
       return ByteData.view((await readBytes(4)).buffer).getFloat32(0, endian);
     } else {
-      var result = ByteData.view(_curr.buffer).getFloat32(_pos, endian);
+      final result = ByteData.view(_curr.buffer).getFloat32(_pos, endian);
       _pos += 4;
       return result;
     }
@@ -319,7 +322,7 @@ class DataInputStream {
       // Keep it simple
       return ByteData.view((await readBytes(8)).buffer).getFloat64(0, endian);
     } else {
-      var result = ByteData.view(_curr.buffer).getFloat64(_pos, endian);
+      final result = ByteData.view(_curr.buffer).getFloat64(_pos, endian);
       _pos += 8;
       return result;
     }
@@ -867,5 +870,48 @@ class EncryptingSink implements Sink<List<int>> {
       _cipher.processBlock(block8, i + offset, out, i);
     }
     _dest.add(out);
+  }
+}
+
+/// A wrapper around an [IOSink] that ensures that all data is flushed before
+/// the [IOSink] is closed.  This is needed when an [IOSink] is being used with
+/// an API obeying the [Sink] contract, which includes [close] but not [flush].
+class FlushingIOSink implements Sink<List<int>> {
+
+  final IOSink _dest;
+  Future<void> _lastClose;
+
+  FlushingIOSink(this._dest);
+
+  @override
+  void add(List<int> data) {
+    assert(_lastClose == null);
+    _dest.add(data);
+  }
+
+  /// Flush all pending data from the underlying [IOSink], and close it.
+  /// Returns a future that completes when the flush and close are finished.
+  /// Calling this method more than once has no effect.
+  /// See also [done].
+  @override
+  Future<void> close() {
+    _lastClose ??= Future(() async {
+      await flush();
+      return _dest.close();
+    });
+    return _lastClose;
+  }
+
+  /// Flush all pending data from the underlying [IOSink].  Returns a
+  /// [Future] that completes when the flush is finished.
+  /// See [IOSink.flush].
+  Future<void> flush() => _dest.flush();
+
+  /// Get a future that will complete the previous [close]
+  /// operation has completed.  It is an error if [close] has not been
+  /// called; in this case, the results are undefined.
+  Future<void> get done {
+    assert (_lastClose != null);
+    return _lastClose;
   }
 }

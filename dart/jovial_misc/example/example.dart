@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:convert/convert.dart';
+import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:jovial_misc/io_utils.dart';
 import 'package:jovial_misc/isolate_stream.dart';
@@ -10,15 +10,17 @@ import 'package:jovial_misc/isolate_stream.dart';
 /// and `java.io.DataOutputStream`
 ///
 Future<void> data_io_stream_example() async {
-  final acc = ByteAccumulatorSink();
-  final out = DataOutputSink(acc);
+  final file = File.fromUri(Directory.systemTemp.uri.resolve('test.dat'));
+  final flushable = FlushingIOSink(file.openWrite());
+  final out = DataOutputSink(flushable);
   out.writeUTF8('Hello, world.');
   out.close();
+  await flushable.done;
 
-  final stream = Stream<List<int>>.fromIterable([acc.bytes]);
-  final dis = DataInputStream(stream);
+  final dis = DataInputStream(file.openRead());
   print(await dis.readUTF8());
   await dis.close();
+  await file.delete();
 }
 
 ///

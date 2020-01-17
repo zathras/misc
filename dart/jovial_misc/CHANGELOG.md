@@ -38,3 +38,7 @@
 - Refactored IsolateStream to make the API more pleasing, by making
   IsolateStreamGenerator<T> an abstract superclass for the client to
   implement.
+
+## 0.4.1
+
+- Added FlushingIOSink

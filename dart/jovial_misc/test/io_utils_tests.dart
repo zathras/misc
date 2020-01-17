@@ -22,6 +22,7 @@ Uint8List _nextBytes(Random rand, int size) {
   return result;
 }
 
+
 /// Test encryption/decryption in memory
 void _testStream(bool chatter, List<List<int>> testData) async {
   final goalBuilder = BytesBuilder(copy: false);
@@ -78,7 +79,6 @@ void bigTest(Random rand, int numItems) async {
   final key = _nextBytes(srand, 16);
   final iv = _nextBytes(srand, 16);
 
-  // ignore: omit_local_variable_types
   final Stream<Uint8List> encrypted = IsolateStream<Uint8List>(
       _BigTestGenerator(rand.nextInt(1 << 32), key, iv, numItems));
   final decryptCipher = CBCBlockCipher(AESFastEngine())
@@ -134,9 +134,24 @@ class _BigTestGenerator extends IsolateByteStreamGenerator {
   }
 }
 
+void _test_flushing_iosink() async {
+  final file = File.fromUri(Directory.systemTemp.uri.resolve('test.dat'));
+  final flushable = FlushingIOSink(file.openWrite());
+  final out = DataOutputSink(flushable);
+  out.writeUTF8('Hello, world.');
+  out.close();
+  await flushable.done;
+
+  final dis = DataInputStream(file.openRead());
+  expect(await dis.readUTF8(), 'Hello, world.');
+  await dis.close();
+  await file.delete();
+}
+
 Future<void> add_io_utils_tests() async {
   final rand = Random(0x2a); // Give it a seed so any bugs are repeatable
 
+  test('flushing_iosink', _test_flushing_iosink);
   test('empty', () => _testStream(true, [[]]));
   test(
       'short',

@@ -238,7 +238,7 @@ abstract class IsolateStreamGenerator<T> implements Sink<T> {
 
 ///
 /// An [IsolateStreamGenerator] for building an [IsolateStream] of
-/// [Uint8List] instances.
+/// bytes, represented by [Uint8List] instances.
 /// This could be used e.g. to simulate a large amount of data coming
 /// from a `File` or a `Socket`.  As a convenience, this class
 /// implements [sizeOf] to count bytes, and [bufferSize] to give
