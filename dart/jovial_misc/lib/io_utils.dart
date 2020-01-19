@@ -99,7 +99,7 @@ class DataInputStream {
         return true;
       }
       if (_source.current is Uint8List) {
-        _curr = _source.current;
+        _curr = _source.current as Uint8List;
       } else {
         _curr = Uint8List.fromList(_source.current);
         // I don't think this ever happens when reading from a file,
@@ -391,7 +391,7 @@ class DataInputStream {
         break;
       }
       if (_source.current is Uint8List) {
-        yield _source.current;
+        yield _source.current as Uint8List;
       } else {
         yield Uint8List.fromList(_source.current);
         // I don't think this ever happens when reading from a file,
@@ -877,7 +877,6 @@ class EncryptingSink implements Sink<List<int>> {
 /// the [IOSink] is closed.  This is needed when an [IOSink] is being used with
 /// an API obeying the [Sink] contract, which includes [close] but not [flush].
 class FlushingIOSink implements Sink<List<int>> {
-
   final IOSink _dest;
   Future<void> _lastClose;
 
@@ -911,7 +910,7 @@ class FlushingIOSink implements Sink<List<int>> {
   /// operation has completed.  It is an error if [close] has not been
   /// called; in this case, the results are undefined.
   Future<void> get done {
-    assert (_lastClose != null);
+    assert(_lastClose != null);
     return _lastClose;
   }
 }

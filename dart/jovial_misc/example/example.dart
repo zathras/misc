@@ -34,11 +34,11 @@ Future<void> isolate_stream_example() async {
   const iterationPause = Duration(milliseconds: 250);
   print('Generating FizzBuzz sequence up to ${fmt.format(max)}');
 
-  final stream = IsolateStream(FizzBuzzGenerator(max));
+  final stream = IsolateStream<String>(FizzBuzzGenerator(max));
   // Our stream will be limited to 11 strings in the buffer at a time.
   for (var iter = StreamIterator(stream); await iter.moveNext();) {
     print(iter.current);
-    await Future.delayed(iterationPause);
+    await Future<void>.delayed(iterationPause);
   }
   // Note that the producer doesn't run too far ahead of the consumer,
   // because the buffer is limited to 30 strings.

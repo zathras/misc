@@ -22,7 +22,6 @@ Uint8List _nextBytes(Random rand, int size) {
   return result;
 }
 
-
 /// Test encryption/decryption in memory
 void _testStream(bool chatter, List<List<int>> testData) async {
   final goalBuilder = BytesBuilder(copy: false);
@@ -67,7 +66,7 @@ void _testStream(bool chatter, List<List<int>> testData) async {
     print('result $result');
     print('');
   }
-  if (!(const IterableEquality()).equals(result, goal)) {
+  if (!(const IterableEquality<int>()).equals(result, goal)) {
     throw Exception('test failed');
   }
 }
@@ -278,8 +277,10 @@ Future<void> add_io_utils_tests() async {
       out.close();
 
       final equals = ListEquality<int>().equals;
-      final allBytes =
-          acc.events.fold(ByteAccumulatorSink(), (a, b) => a..add(b)).bytes;
+      final allBytes = acc.events
+          .fold(ByteAccumulatorSink(),
+              (ByteAccumulatorSink a, List<int> b) => a..add(b))
+          .bytes;
       final dis = ByteBufferDataInputStream(allBytes, endian);
       for (var i = 0; i < iterations; i++) {
         final numExtraBytes = dis.readUnsignedShort();

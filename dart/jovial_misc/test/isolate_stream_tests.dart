@@ -30,9 +30,9 @@ Future<void> add_isolate_stream_tests() async {
     test('small IsolateStream - buffer size $size', () async {
       final testData = ['hello', 'isolate', 'world', 'five', 'elements'];
       print('testing $testData');
-      var str = IsolateStream(StringGenerator(testData, size));
+      var str = IsolateStream<String>(StringGenerator(testData, size));
       final ti = testData.iterator;
-      final si = StreamIterator(str);
+      final si = StreamIterator<String>(str);
       while (ti.moveNext()) {
         expect(await si.moveNext(), true);
         expect(ti.current, await si.current);

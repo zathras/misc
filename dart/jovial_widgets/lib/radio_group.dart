@@ -20,7 +20,7 @@ class RadioGroup<E> extends StatefulWidget {
       @required List<E> values,
       @required String Function(E) label,
       @required E Function() getValue,
-      @required Function(E) setValue,
+      @required void Function(E) setValue,
       double itemHeight,
       TextDirection textDirection = TextDirection.ltr})
       : _config = _RadioGroupConfig<E>(
@@ -38,7 +38,7 @@ class _RadioGroupConfig<E> {
   final String Function(E) label;
   final E Function() getValue;
   final void Function(E) setValue;
-  final double itemHeight; // null is OK
+  final double itemHeight;  // nullable
   final TextDirection textDirection;
   List<double> _horizontalPad;
 
@@ -92,7 +92,7 @@ class _RadioGroupState<E> extends State<RadioGroup<E>> {
                     groupValue: currentValue,
                     onChanged: onChanged)),
             Padding(
-                padding: EdgeInsets.only(right: hPad[i]),
+                padding: EdgeInsets.only(right: hPad[i] + 5),
                 child: Text(_config.label(value), style: titleStyle))
           ]));
     }

@@ -42,3 +42,8 @@
 ## 0.4.1
 
 - Added FlushingIOSink
+
+## 0.4.2
+
+- Tightened up static type checking (`implicit-casts: false` and
+  `implicit-dynamic: false`).
