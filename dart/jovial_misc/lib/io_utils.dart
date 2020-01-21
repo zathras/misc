@@ -98,13 +98,11 @@ class DataInputStream {
       if (!ok) {
         return true;
       }
-      if (_source.current is Uint8List) {
-        _curr = _source.current as Uint8List;
-      } else {
-        _curr = Uint8List.fromList(_source.current);
-        // I don't think this ever happens when reading from a file,
-        // but better safe than sorry.
-      }
+      _curr = Uint8List.fromList(_source.current);
+      // Even if _source.current is already a Uint8List, we have to
+      // copy the data here.  That's because we later take the underlying
+      // ByteBuffer, the Uint8List is only guaranteed to start at byte 0
+      // of the ByteBuffer if we make a copy here.
       _pos = 0;
       // Loop around again, in case we got an empty buffer.
     }
@@ -129,7 +127,9 @@ class DataInputStream {
     }
     await _ensureNext();
     if (_pos + num <= _curr.length) {
-      final result = _curr.sublist(_pos, _pos + num);
+      final result = Uint8List.fromList(_curr.sublist(_pos, _pos + num));
+      // It's not specified whether or not sublist() shares the same buffer
+      // as the source list, or if the result of sublist() is mutable.
       _pos += num;
       return result;
     } else {
@@ -394,8 +394,6 @@ class DataInputStream {
         yield _source.current as Uint8List;
       } else {
         yield Uint8List.fromList(_source.current);
-        // I don't think this ever happens when reading from a file,
-        // but better safe than sorry.
       }
     }
     close();
@@ -407,7 +405,7 @@ class DataInputStream {
   }
 }
 
-/// A wrapper around a [ByteBuffer] instance, for synchronous reading
+/// A wrapper around a List<int>, for synchronous reading
 /// of typed binary data from a byte array.  This is similar to a
 /// `java.io.DataInputStream` over a `java.io.ByteArrayInputStream`.
 ///
@@ -426,7 +424,14 @@ class ByteBufferDataInputStream {
   /// Create a stream that takes its data from source with the given
   /// initial [endian] setting.  Choose [Endian.big]
   /// for interoperability with `java.io.DataInputStream`.
-  ByteBufferDataInputStream(Uint8List source, [this.endian = Endian.big])
+  ByteBufferDataInputStream(List<int> source, [Endian endian = Endian.big])
+      : this._internal(Uint8List.fromList(source), endian);
+
+  // We're forced to copy source even if it's a Uint8List, because that's
+  // the only way to guarantee that buffer[0] is the first byte of the
+  // list.
+
+  ByteBufferDataInputStream._internal(Uint8List source, this.endian)
       : _source = source,
         _asByteData = source.buffer.asByteData();
 
@@ -441,7 +446,15 @@ class ByteBufferDataInputStream {
   /// Returns a new, mutable [Uint8List] containing the desired number
   /// of bytes.
   Uint8List readBytes(int num) {
-    return readBytesImmutable(num);
+    if (_pos + num > _source.lengthInBytes) {
+      throw EOFException('Attempt to read beyond end of input');
+    } else {
+      final result = Uint8List.fromList(_source.sublist(_pos, _pos + num));
+      // It's not specified whether or not sublist() shares the same buffer
+      // as the source list, or if the result is mutable.
+      _pos += num;
+      return result;
+    }
   }
 
   /// Returns a potentially immutable [Uint8List] containing the desired number
@@ -450,13 +463,7 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Uint8List readBytesImmutable(int num) {
-    if (_pos + num > _source.lengthInBytes) {
-      throw EOFException('Attempt to read beyond end of input');
-    } else {
-      final result = _source.sublist(_pos, _pos + num);
-      _pos += num;
-      return result;
-    }
+    return readBytes(num);
   }
 
   /// Reads and returns a 4-byte signed integer
@@ -665,7 +672,7 @@ class DataOutputSink {
     if (bytes is Uint8List) {
       _dest.add(bytes);
     } else {
-      _dest.add(Uint8List.fromList(bytes));
+      _dest.add(Uint8List.fromList(bytes)); // Make a more compact copy
     }
   }
 

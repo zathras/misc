@@ -47,3 +47,8 @@
 
 - Tightened up static type checking (`implicit-casts: false` and
   `implicit-dynamic: false`).
+
+## 0.4.3
+
+- Fixed a bug in DataInputStream, where it was assuming that
+  Uint8List.buffer's first byte was the first byte of the list.
