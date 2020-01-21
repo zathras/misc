@@ -14,6 +14,7 @@ import 'package:flutter/rendering.dart';
 /// by an enum type E
 class RadioGroup<E> extends StatefulWidget {
   final _RadioGroupConfig<E> _config;
+  final bool enabled;
 
   RadioGroup(
       {Key key,
@@ -22,10 +23,20 @@ class RadioGroup<E> extends StatefulWidget {
       @required E Function() getValue,
       @required void Function(E) setValue,
       double itemHeight,
-      TextDirection textDirection = TextDirection.ltr})
-      : _config = _RadioGroupConfig<E>(
-            values, label, getValue, setValue, itemHeight, textDirection),
-        super(key: key);
+      TextDirection textDirection = TextDirection.ltr,
+      bool enabled = true})
+      : this.enabled = enabled,
+      _config = _RadioGroupConfig<E>(values, label, getValue, setValue,
+            itemHeight, textDirection),
+        super(key: key) {
+    assert(values != null);
+    assert(label != null);
+    assert(getValue != null);
+    assert(setValue != null);
+    // itemHeight can be null
+    assert(enabled != null);
+    assert(textDirection != null);
+  }
 
   @override
   _RadioGroupState<E> createState() {
@@ -38,12 +49,13 @@ class _RadioGroupConfig<E> {
   final String Function(E) label;
   final E Function() getValue;
   final void Function(E) setValue;
-  final double itemHeight;  // nullable
+  final double itemHeight; // nullable
   final TextDirection textDirection;
   List<double> _horizontalPad;
 
   _RadioGroupConfig(this.values, this.label, this.getValue, this.setValue,
       this.itemHeight, this.textDirection);
+
 
   List<double> getHorizontalPad(BuildContext context) {
     if (_horizontalPad == null) {
@@ -75,7 +87,9 @@ class _RadioGroupState<E> extends State<RadioGroup<E>> {
   Widget build(BuildContext context) {
     final currentValue = _config.getValue();
     final onChanged = (E newValue) {
-      setState(() => _config.setValue(newValue));
+      if (widget.enabled) {
+        setState(() => _config.setValue(newValue));
+      }
     };
     final List<double> hPad = _config.getHorizontalPad(context);
     final rows = List<Widget>(_config.values.length);
@@ -83,14 +97,14 @@ class _RadioGroupState<E> extends State<RadioGroup<E>> {
     for (int i = 0; i < rows.length; i++) {
       E value = _config.values[i];
       rows[i] = InkWell(
-          onTap: () => onChanged(value),
+          onTap: widget.enabled ? () => onChanged(value) : null,
           child: Row(children: [
             SizedBox(
                 height: _config.itemHeight, // _itemHeight,
                 child: Radio<E>(
                     value: value,
                     groupValue: currentValue,
-                    onChanged: onChanged)),
+                    onChanged: widget.enabled ?  onChanged : null)),
             Padding(
                 padding: EdgeInsets.only(right: hPad[i] + 5),
                 child: Text(_config.label(value), style: titleStyle))
