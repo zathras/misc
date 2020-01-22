@@ -14,6 +14,9 @@ import 'package:pointycastle/export.dart';
 import 'package:jovial_misc/io_utils.dart';
 import 'package:jovial_misc/isolate_stream.dart';
 
+const _paranoia = 1;
+// We multiply the amount of randomized testing by this.
+
 Uint8List _nextBytes(Random rand, int size) {
   final result = Uint8List(size);
   for (var i = 0; i < size; i++) {
@@ -242,7 +245,7 @@ Future<void> add_io_utils_tests() async {
   // DataOutputSink
   //
   for (var endian in [Endian.big, Endian.little]) {
-    const iterations = 100;
+    const iterations = 100 * _paranoia;
     // We do several iterations to make sure that we catch all of the
     // code paths in DataInputStream.  Note the use of
     // DataInputStream.debugStream.
@@ -252,7 +255,7 @@ Future<void> add_io_utils_tests() async {
       final acc = AccumulatorSink<Uint8List>();
       final out = DataOutputSink(acc, endian);
       for (var i = 0; i < iterations; i++) {
-        final numExtraBytes = rand.nextInt(3);
+        final numExtraBytes = rand.nextInt(32);
         out.writeUnsignedShort(numExtraBytes);
         out.writeBytes(Uint8List(numExtraBytes));
         // We emit a random amount of space to catch all the code paths
@@ -305,7 +308,7 @@ Future<void> add_io_utils_tests() async {
       dis.close();
 
       final dis2 = DataInputStream(
-          DataInputStream(Stream.fromIterable(acc.events)).debugStream(),
+          DataInputStream(Stream.fromIterable(acc.events)).debugStream(rand),
           endian);
       for (var i = 0; i < iterations; i++) {
         final numExtraBytes = await dis2.readUnsignedShort();
@@ -328,7 +331,7 @@ Future<void> add_io_utils_tests() async {
       }
       expect(await dis2.isEOF(), true);
       await dis2.close();
-    });
+    }, timeout: Timeout(Duration(seconds: 5 * _paranoia)));
   }
 
   test('Data[Input|Output]Stream, endian mismatch', () async {
@@ -347,9 +350,10 @@ Future<void> add_io_utils_tests() async {
   // encryption/decryption without buffering it all in memory.  These
   // tests are randomized, so we run a fair number of iterations.
   test('stream test 5', () => bigTest(rand, 5));
-  for (var i = 0; i < 100; i++) {
+  for (var i = 0; i < 100 * _paranoia; i++) {
     test('stream test 250 $i', () => bigTest(rand, 250));
   }
   // And finally, run one with a larger amount of data.
-  test('stream test 25000', () => bigTest(rand, 25000));
+  test('stream test 25000', () => bigTest(rand, 25000 * _paranoia),
+      timeout: Timeout(Duration(seconds: 30 * _paranoia)));
 }

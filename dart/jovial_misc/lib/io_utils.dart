@@ -40,9 +40,7 @@ class EOFException implements IOException {
   const EOFException(this.message);
 
   @override
-  String toString() {
-    return 'EOFException: $message';
-  }
+  String toString() => 'EOFException: $message';
 }
 
 /// A coroutines-style wrapper around a
@@ -59,7 +57,7 @@ class EOFException implements IOException {
 /// See also [ByteBufferDataInputStream].
 class DataInputStream {
   // Iterates through the provided Stream<List<int>> directly,
-  // and buffers by hanging onto a Uint8List  until it's been completely
+  // and buffers by hanging onto a Uint8List until it's been completely
   // read.  I suppose I could have based this off of quiver's
   // StreamBuffer class, but it doesn't seem to handle checking for
   // EOF.  Besides, as the great Japanese philosopher
@@ -98,11 +96,11 @@ class DataInputStream {
       if (!ok) {
         return true;
       }
-      _curr = Uint8List.fromList(_source.current);
-      // Even if _source.current is already a Uint8List, we have to
-      // copy the data here.  That's because we later take the underlying
-      // ByteBuffer, the Uint8List is only guaranteed to start at byte 0
-      // of the ByteBuffer if we make a copy here.
+      if (_source.current is Uint8List) {
+        _curr = _source.current as Uint8List;
+      } else {
+        _curr = Uint8List.fromList(_source.current);
+      }
       _pos = 0;
       // Loop around again, in case we got an empty buffer.
     }
@@ -126,19 +124,20 @@ class DataInputStream {
       return Uint8List(0);
     }
     await _ensureNext();
-    if (_pos + num <= _curr.length) {
+    if (_pos == 0 && num == _curr.length) {
+      _pos = _curr.length;
+      return Uint8List.fromList(_curr);
+    } else if (_pos + num <= _curr.length) {
       final result = Uint8List.fromList(_curr.sublist(_pos, _pos + num));
-      // It's not specified whether or not sublist() shares the same buffer
-      // as the source list, or if the result of sublist() is mutable.
       _pos += num;
       return result;
     } else {
       final len = _curr.length - _pos;
       assert(len > 0 && len < num);
       final result = Uint8List(num);
-      final buf = await readBytes(len);
+      final buf = await readBytesImmutable(len);
       result.setRange(0, len, buf);
-      final buf2 = await readBytes(num - len);
+      final buf2 = await readBytesImmutable(num - len);
       result.setRange(len, num, buf2);
       return result;
     }
@@ -164,12 +163,19 @@ class DataInputStream {
       final len = _curr.length - _pos;
       assert(len > 0 && len < num);
       final result = Uint8List(num);
-      var buf = await readBytes(len);
+      var buf = await readBytesImmutable(len);
       result.setRange(0, len, buf);
-      buf = await readBytes(num - len);
+      buf = await readBytesImmutable(num - len);
       result.setRange(len, num, buf);
       return result;
     }
+  }
+
+  /// Returns a potentially immutable [ByteData] containing the desired number
+  /// of bytes.
+  Future<ByteData> readByteDataImmutable(int num) async {
+    final bytes = await readBytesImmutable(num);
+    return bytes.buffer.asByteData(bytes.offsetInBytes, num);
   }
 
   /// Reads and returns a 4-byte signed integer
@@ -179,11 +185,12 @@ class DataInputStream {
   Future<int> readInt() async {
     await _ensureNext();
     if (_curr.length - _pos < 4) {
-      // If we're on a buffer boundary
-      // Keep it simple
-      return ByteData.view((await readBytes(4)).buffer).getInt32(0, endian);
+      // If we're on a buffer boundary, keep it simple
+      return (await readByteDataImmutable(4)).getInt32(0, endian);
     } else {
-      final result = ByteData.view(_curr.buffer).getInt32(_pos, endian);
+      final result = _curr.buffer
+          .asByteData()
+          .getInt32(_pos + _curr.offsetInBytes, endian);
       _pos += 4;
       return result;
     }
@@ -198,9 +205,11 @@ class DataInputStream {
     if (_curr.length - _pos < 4) {
       // If we're on a buffer boundary
       // Keep it simple
-      return ByteData.view((await readBytes(4)).buffer).getUint32(0, endian);
+      return (await readByteDataImmutable(4)).getUint32(0, endian);
     } else {
-      final result = ByteData.view(_curr.buffer).getUint32(_pos, endian);
+      final result = _curr.buffer
+          .asByteData()
+          .getUint32(_pos + _curr.offsetInBytes, endian);
       _pos += 4;
       return result;
     }
@@ -215,9 +224,11 @@ class DataInputStream {
     if (_curr.length - _pos < 2) {
       // If we're on a buffer boundary
       // Keep it simple
-      return ByteData.view((await readBytes(2)).buffer).getUint16(0, endian);
+      return (await readByteDataImmutable(2)).getUint16(0, endian);
     } else {
-      final result = ByteData.view(_curr.buffer).getUint16(_pos, endian);
+      final result = _curr.buffer
+          .asByteData()
+          .getUint16(_pos + _curr.offsetInBytes, endian);
       _pos += 2;
       return result;
     }
@@ -232,9 +243,11 @@ class DataInputStream {
     if (_curr.length - _pos < 2) {
       // If we're on a buffer boundary
       // Keep it simple
-      return ByteData.view((await readBytes(2)).buffer).getInt16(0, endian);
+      return (await readByteDataImmutable(2)).getInt16(0, endian);
     } else {
-      final result = ByteData.view(_curr.buffer).getInt16(_pos, endian);
+      final result = _curr.buffer
+          .asByteData()
+          .getInt16(_pos + _curr.offsetInBytes, endian);
       _pos += 2;
       return result;
     }
@@ -270,9 +283,11 @@ class DataInputStream {
     if (_curr.length - _pos < 8) {
       // If we're on a buffer boundary
       // Keep it simple
-      return ByteData.view((await readBytes(8)).buffer).getInt64(0, endian);
+      return (await readByteDataImmutable(8)).getInt64(0, endian);
     } else {
-      final result = ByteData.view(_curr.buffer).getInt64(_pos, endian);
+      final result = _curr.buffer
+          .asByteData()
+          .getInt64(_pos + _curr.offsetInBytes, endian);
       _pos += 8;
       return result;
     }
@@ -282,15 +297,20 @@ class DataInputStream {
   /// a Dart int according to the semantics of [ByteData.getUint64]
   /// using the current [endian] setting.
   ///
+  /// NOTE:  Dart doesn't support unsigned longs, but you can get an
+  ///        unsigned [BigInt] using [BigInt.toUnsigned].
+  ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<int> readUnsignedLong() async {
     await _ensureNext();
     if (_curr.length - _pos < 8) {
       // If we're on a buffer boundary
       // Keep it simple
-      return ByteData.view((await readBytes(8)).buffer).getUint64(0, endian);
+      return (await readByteDataImmutable(8)).getUint64(0, endian);
     } else {
-      final result = ByteData.view(_curr.buffer).getUint64(_pos, endian);
+      final result = _curr.buffer
+          .asByteData()
+          .getUint64(_pos + _curr.offsetInBytes, endian);
       _pos += 8;
       return result;
     }
@@ -304,9 +324,11 @@ class DataInputStream {
     if (_curr.length - _pos < 4) {
       // If we're on a buffer boundary
       // Keep it simple
-      return ByteData.view((await readBytes(4)).buffer).getFloat32(0, endian);
+      return (await readByteDataImmutable(4)).getFloat32(0, endian);
     } else {
-      final result = ByteData.view(_curr.buffer).getFloat32(_pos, endian);
+      final result = _curr.buffer
+          .asByteData()
+          .getFloat32(_pos + _curr.offsetInBytes, endian);
       _pos += 4;
       return result;
     }
@@ -320,9 +342,11 @@ class DataInputStream {
     if (_curr.length - _pos < 8) {
       // If we're on a buffer boundary
       // Keep it simple
-      return ByteData.view((await readBytes(8)).buffer).getFloat64(0, endian);
+      return (await readByteDataImmutable(8)).getFloat64(0, endian);
     } else {
-      final result = ByteData.view(_curr.buffer).getFloat64(_pos, endian);
+      final result = _curr.buffer
+          .asByteData()
+          .getFloat64(_pos + _curr.offsetInBytes, endian);
       _pos += 8;
       return result;
     }
@@ -359,32 +383,27 @@ class DataInputStream {
     }
   }
 
-  /// Test out the buffer logic by returning 3 bytes at a time.  The stream
+  /// Test out the buffer logic by returning randomized, smallish chunks
+  /// of data at a time.  The stream
   /// obtained from this method can be fed into another DataInputStream.
-  Stream<Uint8List> debugStream() async* {
-    while (true) {
-      final a = await read();
-      if (a == -1) {
-        break; // EOF, so bail
+  Stream<Uint8List> debugStream([Random random]) async* {
+    random ??= Random();
+    while (!(await isEOF())) {
+      var remain = _curr.length - _pos;
+      while (remain > 0) {
+        final len = random.nextInt(remain + 1);
+        yield Uint8List.view(_curr.buffer, _curr.offsetInBytes + _pos, len);
+        remain -= len;
+        _pos += len;
       }
-      final b = await read();
-      if (b == -1) {
-        yield Uint8List.fromList([a]);
-        break;
-      }
-      final c = await read();
-      if (c == -1) {
-        yield Uint8List.fromList([a, b]);
-        break;
-      }
-      yield Uint8List.fromList([a, b, c]);
+      assert(_pos == _curr.length);
     }
   }
 
   /// Give a stream containing our as-yet-unread bytes.
   Stream<Uint8List> remaining() async* {
     if (_curr != null && _pos < _curr.length) {
-      yield await readBytes(_curr.length - _pos);
+      yield await readBytesImmutable(_curr.length - _pos);
     }
     while (true) {
       if (!await _source.moveNext()) {
@@ -396,12 +415,13 @@ class DataInputStream {
         yield Uint8List.fromList(_source.current);
       }
     }
-    close();
+    // No need to close, because a StreamIterator cancels when
+    // moveNext completes with false or error.
   }
 
   /// Cancel our underling stream.
-  void close() async {
-    return _source.cancel(); // That's a future
+  Future<void> close() {
+    return _source.cancel();
   }
 }
 
@@ -424,16 +444,14 @@ class ByteBufferDataInputStream {
   /// Create a stream that takes its data from source with the given
   /// initial [endian] setting.  Choose [Endian.big]
   /// for interoperability with `java.io.DataInputStream`.
-  ByteBufferDataInputStream(List<int> source, [Endian endian = Endian.big])
-      : this._internal(Uint8List.fromList(source), endian);
-
-  // We're forced to copy source even if it's a Uint8List, because that's
-  // the only way to guarantee that buffer[0] is the first byte of the
-  // list.
+  ByteBufferDataInputStream(Uint8List source, [Endian endian = Endian.big])
+      : this._internal(
+            source is Uint8List ? source : Uint8List.fromList(source), endian);
 
   ByteBufferDataInputStream._internal(Uint8List source, this.endian)
       : _source = source,
-        _asByteData = source.buffer.asByteData();
+        _asByteData = source.buffer
+            .asByteData(source.offsetInBytes, source.lengthInBytes);
 
   /// Returns the number of bytes that can be read from the internal buffer.
   ///  If we're at EOF, returns zero, otherwise, returns a non-zero positive
@@ -446,15 +464,7 @@ class ByteBufferDataInputStream {
   /// Returns a new, mutable [Uint8List] containing the desired number
   /// of bytes.
   Uint8List readBytes(int num) {
-    if (_pos + num > _source.lengthInBytes) {
-      throw EOFException('Attempt to read beyond end of input');
-    } else {
-      final result = Uint8List.fromList(_source.sublist(_pos, _pos + num));
-      // It's not specified whether or not sublist() shares the same buffer
-      // as the source list, or if the result is mutable.
-      _pos += num;
-      return result;
-    }
+    return Uint8List.fromList(readBytesImmutable(num));
   }
 
   /// Returns a potentially immutable [Uint8List] containing the desired number
@@ -463,7 +473,13 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Uint8List readBytesImmutable(int num) {
-    return readBytes(num);
+    if (_pos + num > _source.lengthInBytes) {
+      throw EOFException('Attempt to read beyond end of input');
+    } else {
+      final result = _source.sublist(_pos, _pos + num);
+      _pos += num;
+      return result;
+    }
   }
 
   /// Reads and returns a 4-byte signed integer
@@ -545,11 +561,7 @@ class ByteBufferDataInputStream {
     } else {
       final b = _asByteData.getInt8(_pos);
       _pos += 1;
-      if (b & 0x80 != 0) {
-        return b - 0x100;
-      } else {
-        return b;
-      }
+      return b;
     }
   }
 
@@ -570,6 +582,9 @@ class ByteBufferDataInputStream {
   /// Reads and returns an 8-byte unsigned integer, converted to
   /// a Dart int according to the semantics of [ByteData.getUint64]
   /// using the current [endian] setting.
+  ///
+  /// NOTE:  Dart doesn't support unsigned longs, but you can get an
+  ///        unsigned [BigInt] using [BigInt.toUnsigned].
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   int readUnsignedLong() {
@@ -684,31 +699,31 @@ class DataOutputSink {
   /// Writes a 2 byte signed short using the current [endian] format.
   void writeShort(int v) {
     final d = ByteData(2)..setInt16(0, v, endian);
-    _dest.add(d.buffer.asUint8List());
+    _dest.add(d.buffer.asUint8List(d.offsetInBytes, 2));
   }
 
   /// Writes a 2 byte unsigned short using the current [endian] format.
   void writeUnsignedShort(int v) {
     final d = ByteData(2)..setUint16(0, v, endian);
-    _dest.add(d.buffer.asUint8List());
+    _dest.add(d.buffer.asUint8List(d.offsetInBytes, 2));
   }
 
   /// Writes a 4 byte int using the current [endian] format.
   void writeInt(int v) {
     final d = ByteData(4)..setInt32(0, v, endian);
-    _dest.add(d.buffer.asUint8List());
+    _dest.add(d.buffer.asUint8List(d.offsetInBytes, 4));
   }
 
   /// Writes a 4 byte unsigned int using the current [endian] format.
   void writeUnsignedInt(int v) {
     final d = ByteData(4)..setUint32(0, v, endian);
-    _dest.add(d.buffer.asUint8List());
+    _dest.add(d.buffer.asUint8List(d.offsetInBytes, 4));
   }
 
   /// Writes an 8 byte long int using the current [endian] format.
   void writeLong(int v) {
     final d = ByteData(8)..setInt64(0, v, endian);
-    _dest.add(d.buffer.asUint8List());
+    _dest.add(d.buffer.asUint8List(d.offsetInBytes, 8));
   }
 
   /// Writes an unsigned 8 byte long using the current [endian] format.
@@ -716,19 +731,19 @@ class DataOutputSink {
   /// `int` according to the semantics of [ByteData.setUint64`.
   void writeUnsignedLong(int v) {
     final d = ByteData(8)..setUint64(0, v, endian);
-    _dest.add(d.buffer.asUint8List());
+    _dest.add(d.buffer.asUint8List(d.offsetInBytes, 8));
   }
 
   /// Writes a four-byte float using the current [endian] format.
   void writeFloat(double v) {
     final d = ByteData(4)..setFloat32(0, v, endian);
-    _dest.add(d.buffer.asUint8List());
+    _dest.add(d.buffer.asUint8List(d.offsetInBytes, 4));
   }
 
   /// Writes an eight-byte double using the current [endian] format.
   void writeDouble(double v) {
     final d = ByteData(8)..setFloat64(0, v, endian);
-    _dest.add(d.buffer.asUint8List());
+    _dest.add(d.buffer.asUint8List(d.offsetInBytes, 8));
   }
 
   /// Write the given string as an unsigned short giving the byte length,

@@ -52,3 +52,7 @@
 
 - Fixed a bug in DataInputStream, where it was assuming that
   Uint8List.buffer's first byte was the first byte of the list.
+
+## 0.4.4
+
+- DataInputStream:  Avoid unnecessary copying of underlying byte data.
