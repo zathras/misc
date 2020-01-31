@@ -26,8 +26,8 @@ class RadioGroup<E> extends StatefulWidget {
       TextDirection textDirection = TextDirection.ltr,
       bool enabled = true})
       : this.enabled = enabled,
-      _config = _RadioGroupConfig<E>(values, label, getValue, setValue,
-            itemHeight, textDirection),
+        _config = _RadioGroupConfig<E>(
+            values, label, getValue, setValue, itemHeight, textDirection),
         super(key: key) {
     assert(values != null);
     assert(label != null);
@@ -55,7 +55,6 @@ class _RadioGroupConfig<E> {
 
   _RadioGroupConfig(this.values, this.label, this.getValue, this.setValue,
       this.itemHeight, this.textDirection);
-
 
   List<double> getHorizontalPad(BuildContext context) {
     if (_horizontalPad == null) {
@@ -104,10 +103,17 @@ class _RadioGroupState<E> extends State<RadioGroup<E>> {
                 child: Radio<E>(
                     value: value,
                     groupValue: currentValue,
-                    onChanged: widget.enabled ?  onChanged : null)),
+                    onChanged: widget.enabled ? onChanged : null)),
             Padding(
                 padding: EdgeInsets.only(right: hPad[i] + 5),
-                child: Text(_config.label(value), style: titleStyle))
+                child: (widget.enabled
+                    ? Text(_config.label(value), style: titleStyle)
+                    : RichText(
+                        text: TextSpan(text: '', style: titleStyle, children: [
+                        TextSpan(
+                            text: _config.label(value),
+                            style: const TextStyle(color: Colors.grey))
+                      ]))))
           ]));
     }
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
