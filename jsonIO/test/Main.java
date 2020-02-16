@@ -1,5 +1,8 @@
 
 import java.io.StringReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.io.IOException;
 import com.jovial.util.JsonIO;
 
 public class Main {
@@ -28,5 +31,15 @@ public class Main {
 	assert (n instanceof Double);
 	n = readFrom("-9223372036854775809");
 	assert (n instanceof Double);
+        System.out.println("Testing object conversion:");
+        Writer out = new OutputStreamWriter(System.out);
+        JsonIO.writeJSON(out, new Object(), true);
+        out.write("\n");
+        out.flush();
+        try {
+            JsonIO.writeJSON(out, new Object());
+        } catch (IOException ex) {
+            System.out.println("Got expected exception:  " + ex);
+        }
     }
 }

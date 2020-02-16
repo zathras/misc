@@ -76,8 +76,12 @@ import java.util.*;
  * </pre>
  * For numbers, the reader will produce Integer, Long or Double; the
  * writer will accept Integer, Long, Float or Double.
- *
+ * <p>
  * For lists, the writer will accept Java arrays or any List type.
+ * <p>
+ * Note that byte arrays are generally encoded an base64 and sent as
+ * strings.  It's up to the user of this library to do the Base64
+ * encoding/decoding, e.g. with java.util.Base64.
  *
  * @author Bill Foote (http://jovial.com)
  */
@@ -106,8 +110,10 @@ public class JsonIO {
     public static Object stringToValue(String str) throws IOException {
         return readJSON(new StringReader(str));
     }
+
     /**
-     * Write a JSON object to out.  The argument must correspond to the
+     * Write a JSON object to out, and do not convert unknown types to
+     * strings.  The argument must correspond to the
      * JSON type as described in the class documentation, one of
      * HashMap, Object[], String, Integer, Long, Float, Double, Boolean or null.
      * See the class documentation  for other details of the
@@ -123,6 +129,33 @@ public class JsonIO {
      * @see JsonIO
      **/
     public static void writeJSON(Writer out, Object value) throws IOException {
+        writeJSON(out, value, false);
+    }
+
+    /**
+     * Write a JSON object to out.  If convertToString is false, the
+     * argument must correspond to the
+     * JSON type as described in the class documentation, one of
+     * HashMap, Object[], String, Integer, Long, Float, Double, Boolean or null.
+     * If convertToString is true, any unknown types will be converted
+     * to a string with toString().
+     * See the class documentation  for other details of the
+     * syntax.
+     *
+     * @param   out     The stream to write to.  A buffered writer is
+     *                  recommended; a UTF-8 character encoding is common
+     *                  for JSON streams. 
+     *
+     * @param   convertToString  If true, unknown types will be converted to 
+     *                           strings.
+     *
+     * @throws  IOException if there is an underlying IO exception, or if value
+     *                      contains an invalid type.
+     *
+     * @see JsonIO
+     **/
+    public static void writeJSON(Writer out, Object value, 
+                                 boolean convertToString) throws IOException {
         if (value == null) {
             out.write("null");
         } else if (value instanceof Number) {
@@ -133,8 +166,34 @@ public class JsonIO {
             } else {
                 out.write("false");
             }
-        } else if (value instanceof String) {
-            String s = (String) value;
+        } else if (value instanceof List || value instanceof Object[]) {
+            Object[] arr = (value instanceof Object[]) ? ((Object[]) value) : ((List) value).toArray();
+            out.write('[');
+            for (int i = 0; i < arr.length; i++) {
+                if (i > 0) {
+                    out.write(',');
+                }
+                writeJSON(out, arr[i]);
+            }
+            out.write(']');
+        } else if (value instanceof Map) {
+            Map map = (Map) value;
+            out.write('{');
+            boolean first = true;
+            for (Iterator it = map.entrySet().iterator(); it.hasNext();) {
+                if (first) {
+                    first = false;
+                } else {
+                    out.write(',');
+                }
+                Map.Entry ent = (Map.Entry) it.next();
+                writeJSON(out, ent.getKey());
+                out.write(':');
+                writeJSON(out, ent.getValue());
+            }
+            out.write('}');
+        } else if (convertToString || value instanceof String) {
+            String s = value.toString();
             out.write('"');
             for (int i = 0; i < s.length(); i++) {
                 char c = s.charAt(i);
@@ -165,32 +224,6 @@ public class JsonIO {
                 }
             }
             out.write('"');
-        } else if (value instanceof List || value instanceof Object[]) {
-            Object[] arr = (value instanceof Object[]) ? ((Object[]) value) : ((List) value).toArray();
-            out.write('[');
-            for (int i = 0; i < arr.length; i++) {
-                if (i > 0) {
-                    out.write(',');
-                }
-                writeJSON(out, arr[i]);
-            }
-            out.write(']');
-        } else if (value instanceof Map) {
-            Map map = (Map) value;
-            out.write('{');
-            boolean first = true;
-            for (Iterator it = map.entrySet().iterator(); it.hasNext();) {
-                if (first) {
-                    first = false;
-                } else {
-                    out.write(',');
-                }
-                Map.Entry ent = (Map.Entry) it.next();
-                writeJSON(out, ent.getKey());
-                out.write(':');
-                writeJSON(out, ent.getValue());
-            }
-            out.write('}');
         } else {
             throw new IOException("Invalid type " + value.getClass() + " for " 
                                   + value);
