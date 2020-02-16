@@ -59,7 +59,7 @@ class DataInputStream {
   // Iterates through the provided Stream<List<int>> directly,
   // and buffers by hanging onto a Uint8List until it's been completely
   // read.  I suppose I could have based this off of quiver's
-  // StreamBuffer class, but it doesn't seem to handle checking for
+  // StreamBuffer class, but that doesn't seem to handle checking for
   // EOF.  Besides, as the great Japanese philosopher
   // Gudetama famously said, "meh."   (⊃◜⌓◝⊂)
   final StreamIterator<List<int>> _source;
