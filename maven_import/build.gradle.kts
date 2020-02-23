@@ -9,23 +9,25 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
     maven {
-        url = uri("https://maven.pkg.github.com/zathras/db9010")
-        credentials {
-            username = "zathras"
-            password = "848e249a25d6c3da4b68287ba619aed81b6867a7"
-            // It's a little weird that Github Packages requires a token
-            // to access a maven repo that's part of a *public* github
-            // repository.  Since all of my github repos on this account
-            // are public, I don't think there's any harm in publishing
-            // this token, which only has "read:packages" permission.
-        }
+        url = uri("https://zathras.github.io/maven/")
+        // For github pacakges:
+        // url = uri("https://maven.pkg.github.com/zathras/db9010")
+        // credentials {
+        //     username = "zathras"
+        //     password = "mumble"
+        // }
+        //
+        // Strangely, Github Packages requires credentials for a public
+        // repository.  That's inconvenient, especially since Github prevents
+        // one from publishing a credential -- even one that just allows read
+        // access on packages.
     }
 }
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.h2database", "h2", "1.4.200")
-    implementation("com.jovial.db9010", "db9010", "0.1.0")
+    implementation("com.jovial", "db9010", "0.1.0")
     testCompile("junit", "junit", "4.12")
 }
 
