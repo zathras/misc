@@ -1,7 +1,9 @@
 
-import java.sql.PreparedStatement
 import com.jovial.db9010.*
-import java.util.logging.*
+import java.util.logging.Logger
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Handler
 
 object People : Table("People") {
 
