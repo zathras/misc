@@ -7,9 +7,11 @@ group = "org.example"
 version = "1.0-SNAPSHOT"
 
 repositories {
-    mavenCentral()
+    jcenter()
     maven {
-        url = uri("https://zathras.github.io/maven/")
+        url = uri("http://maven.jovial.com")  
+        // Redirects to https://dl.bintray.com/zathras/maven/
+
         // For github pacakges:
         // url = uri("https://maven.pkg.github.com/zathras/db9010")
         // credentials {
@@ -27,7 +29,7 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.h2database", "h2", "1.4.200")
-    implementation("com.jovial", "db9010", "0.1.0")
+    implementation("com.jovial", "db9010", "0.2.0")
     testCompile("junit", "junit", "4.12")
 }
 
