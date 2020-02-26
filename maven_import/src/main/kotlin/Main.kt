@@ -25,7 +25,6 @@ fun main() {
     logger.addHandler(handler)
     logger.setLevel(Level.FINE)
 
-    // Now do the short demo, from the overview:
     Database.withConnection("jdbc:h2:mem:test", "root", "") { db ->
 
         db.createTable(People)
