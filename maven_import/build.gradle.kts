@@ -29,7 +29,7 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("com.h2database", "h2", "1.4.200")
-    implementation("com.jovial", "db9010", "0.2.0")
+    implementation("com.jovial", "db9010", "0.2.1")
     testCompile("junit", "junit", "4.12")
 }
 
