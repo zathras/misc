@@ -48,4 +48,9 @@ against the wall to see what sticks.  Some notable assertions:
 
 *  The URI of an asset might resolve to multiple URLs.
 
+*  What about copyright?  That's not captured in this domain model.
+   Is French droit d'auteur a broader concept that needs special treatment?
+   Is there anything in International, EU or French law that we need to
+   respect in the model?
 
+*  Who owns what?  Who contributed what?  Do we need to consider permissions?
