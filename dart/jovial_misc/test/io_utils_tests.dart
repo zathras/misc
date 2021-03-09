@@ -227,14 +227,12 @@ Future<void> add_io_utils_tests() async {
   //
   for (var i = 0; i < 250; i += 1 + i ~/ 5 + i ~/ 10) {
     test('length factor $i', () async {
-      final data = List<List<int>>(i);
       for (var j = 0; j < 1000; j += 1 + j ~/ 5 + j ~/ 10) {
-        for (var ii = 0; ii < i; ii++) {
-          data[ii] = List(rand.nextInt(j + 1));
-          for (var jj = 0; jj < data[ii].length; jj++) {
-            data[ii][jj] = rand.nextInt(0x100);
-          }
-        }
+        final data = List<List<int>>.generate(i, (int ii) {
+          return List.generate(rand.nextInt(j + 1), (int jj) {
+            return rand.nextInt(0x100);
+          });
+        });
         _testStream(false, data);
       }
     });

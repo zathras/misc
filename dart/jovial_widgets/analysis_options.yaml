@@ -1,6 +1,14 @@
 
 include: package:pedantic/analysis_options.yaml
 
+linter:
+    rules:
+       omit_local_variables_types: ignore
+       await_only_futures: true
+       camel_case_types: true
+       cancel_subscriptions: true
+       comment_references: true
+
 
 analyzer:
     strong-mode:

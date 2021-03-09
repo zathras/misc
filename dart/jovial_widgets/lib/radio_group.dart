@@ -17,25 +17,18 @@ class RadioGroup<E> extends StatefulWidget {
   final bool enabled;
 
   RadioGroup(
-      {Key key,
-      @required List<E> values,
-      @required String Function(E) label,
-      @required E Function() getValue,
-      @required void Function(E) setValue,
-      double itemHeight,
+      {Key? key,
+      required List<E> values,
+      required String Function(E) label,
+      required E? Function() getValue,
+      required void Function(E?) setValue,
+      double? itemHeight,
       TextDirection textDirection = TextDirection.ltr,
       bool enabled = true})
-      : this.enabled = enabled,
+      : enabled = enabled,
         _config = _RadioGroupConfig<E>(
             values, label, getValue, setValue, itemHeight, textDirection),
         super(key: key) {
-    assert(values != null);
-    assert(label != null);
-    assert(getValue != null);
-    assert(setValue != null);
-    // itemHeight can be null
-    assert(enabled != null);
-    assert(textDirection != null);
   }
 
   @override
@@ -47,19 +40,19 @@ class RadioGroup<E> extends StatefulWidget {
 class _RadioGroupConfig<E> {
   final List<E> values;
   final String Function(E) label;
-  final E Function() getValue;
-  final void Function(E) setValue;
-  final double itemHeight; // nullable
+  final E? Function() getValue;
+  final void Function(E?) setValue;
+  final double? itemHeight;
   final TextDirection textDirection;
-  List<double> _horizontalPad;
+  List<double>? _horizontalPad;
 
   _RadioGroupConfig(this.values, this.label, this.getValue, this.setValue,
       this.itemHeight, this.textDirection);
 
   List<double> getHorizontalPad(BuildContext context) {
     if (_horizontalPad == null) {
-      final TextStyle titleStyle = Theme.of(context).textTheme.subhead;
-      _horizontalPad = values.map<double>((E value) {
+      final TextStyle? titleStyle = Theme.of(context).textTheme.subtitle1;
+      final hp = values.map<double>((E value) {
         final RenderParagraph rp = RenderParagraph(
             TextSpan(text: label(value), style: titleStyle),
             maxLines: 1,
@@ -68,12 +61,15 @@ class _RadioGroupConfig<E> {
             maxWidth: double.infinity, minWidth: 0, minHeight: 0));
         return rp.getMinIntrinsicWidth(double.infinity);
       }).toList(growable: false);
-      final maxWidth = _horizontalPad.fold<double>(0.0, max);
-      for (int i = 0; i < _horizontalPad.length; i++) {
-        _horizontalPad[i] = maxWidth - _horizontalPad[i];
+      final maxWidth = hp.fold<double>(0.0, max);
+      for (int i = 0; i < hp.length; i++) {
+        hp[i] = maxWidth - hp[i];
       }
+      _horizontalPad = hp;
+      return hp;
+    } else {
+      return _horizontalPad!;
     }
-    return _horizontalPad;
   }
 }
 
@@ -85,17 +81,16 @@ class _RadioGroupState<E> extends State<RadioGroup<E>> {
   @override
   Widget build(BuildContext context) {
     final currentValue = _config.getValue();
-    final onChanged = (E newValue) {
+    final onChanged = (E? newValue) {
       if (widget.enabled) {
         setState(() => _config.setValue(newValue));
       }
     };
     final List<double> hPad = _config.getHorizontalPad(context);
-    final rows = List<Widget>(_config.values.length);
-    final TextStyle titleStyle = Theme.of(context).textTheme.subhead;
-    for (int i = 0; i < rows.length; i++) {
+    final TextStyle? titleStyle = Theme.of(context).textTheme.subtitle1;
+    final rows = List<Widget>.generate(_config.values.length, (int i) {
       E value = _config.values[i];
-      rows[i] = InkWell(
+      return InkWell(
           onTap: widget.enabled ? () => onChanged(value) : null,
           child: Row(children: [
             SizedBox(
@@ -115,7 +110,7 @@ class _RadioGroupState<E> extends State<RadioGroup<E>> {
                             style: const TextStyle(color: Colors.grey))
                       ]))))
           ]));
-    }
+    });
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows);
   }
 }

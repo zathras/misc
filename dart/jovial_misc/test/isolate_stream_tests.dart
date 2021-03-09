@@ -35,7 +35,7 @@ Future<void> add_isolate_stream_tests() async {
       final si = StreamIterator<String>(str);
       while (ti.moveNext()) {
         expect(await si.moveNext(), true);
-        expect(ti.current, await si.current);
+        expect(ti.current, si.current);
       }
       expect(await si.moveNext(), false);
     });

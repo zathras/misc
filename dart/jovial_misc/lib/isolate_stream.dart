@@ -134,7 +134,7 @@ class IsolateStream<T> extends DelegatingStream<T> {
 ///  See also [IsolateByteStreamGenerator].
 ///
 abstract class IsolateStreamGenerator<T> implements Sink<T> {
-  _ProducerSession _session; // null in consumer
+  _ProducerSession? _session; // null in consumer
 
   /// Initialize a new generator.
   IsolateStreamGenerator();
@@ -165,17 +165,18 @@ abstract class IsolateStreamGenerator<T> implements Sink<T> {
   /// full.  This may only be called in the producer isolate.
   Future<void> sendValue(T value) async {
     _ensureInConsumer();
-    final size = _session.bufferSize;
+    final session = _session!;
+    final size = session.bufferSize;
     if (size > 1) {
-      await _session.waitForAcks(1);
+      await session.waitForAcks(1);
     } else if (size == 1) {
       // must wait until buffer is empty
-      await _session.waitForAcks(0);
+      await session.waitForAcks(0);
     }
-    _session.add(value);
+    session.add(value);
     if (size <= 0) {
       // rendezvous semantics - wait until received
-      await _session.waitForAcks(0);
+      await session.waitForAcks(0);
     }
   }
 
@@ -186,7 +187,7 @@ abstract class IsolateStreamGenerator<T> implements Sink<T> {
   @override
   void add(T value) {
     _ensureInConsumer();
-    _session.add(value);
+    _session!.add(value);
   }
 
   /// If necessary, pause the sending isolate (the producer) until our
@@ -214,12 +215,13 @@ abstract class IsolateStreamGenerator<T> implements Sink<T> {
   ///        consumed.
   Future<void> flushIfNeeded() {
     _ensureInConsumer();
-    if (_session.bufferSize > 1) {
-      return _session.waitForAcks(1);
+    final session = _session!;
+    if (session.bufferSize > 1) {
+      return session.waitForAcks(1);
     } else {
       // For a buffer of 1, it must be empty before adding an element.
       // For a buffer of 0, it must be empty before letting the add complete.
-      return _session.waitForAcks(0);
+      return session.waitForAcks(0);
     }
   }
 
@@ -267,8 +269,8 @@ class _IsolateArgs {
 
 class _ConsumerSession<T> {
   final IsolateStreamGenerator generator;
-  int killedWith;
-  Isolate isolate;
+  int? killedWith;
+  Isolate? isolate;
 
   _ConsumerSession(this.generator);
 
@@ -283,10 +285,10 @@ class _ConsumerSession<T> {
     final isolateExit = ReceivePort();
     isolate = await Isolate.spawn(runInIsolate, args,
         onExit: isolateExit.sendPort,
-        debugName: '${generator}',
+        debugName: '$generator',
         errorsAreFatal: true);
     if (killedWith != null) {
-      isolate.kill(priority: killedWith);
+      isolate!.kill(priority: killedWith!);
       return;
     }
     // Get the port that runIsolate sends to us for flow control
@@ -310,12 +312,12 @@ class _ConsumerSession<T> {
   }
 
   /// See [IsolateStream.kill]
-  void kill(int priority) {
+  void kill(int? priority) {
     priority ??= Isolate.beforeNextEvent;
     killedWith = priority;
     // Record the priority in case isolate is null -- see spawnAndRun().
     if (isolate != null) {
-      isolate.kill(priority: priority);
+      isolate!.kill(priority: priority);
     }
   }
 

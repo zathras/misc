@@ -63,8 +63,8 @@ class DataInputStream {
   // EOF.  Besides, as the great Japanese philosopher
   // Gudetama famously said, "meh."   (⊃◜⌓◝⊂)
   final StreamIterator<List<int>> _source;
-  Uint8List _curr;
-  int _pos;
+  Uint8List? _curr;         // Set up in isEOF
+  int _pos = 0;
   static const _utf8Decoder = Utf8Decoder(allowMalformed: true);
 
   /// The current endian setting, either [Endian.big] or [Endian.little].
@@ -86,12 +86,12 @@ class DataInputStream {
     if (await isEOF()) {
       return 0;
     }
-    return _curr.length - _pos;
+    return _curr!.length - _pos;
   }
 
   /// Check if we're at end of file.
   Future<bool> isEOF() async {
-    while (_curr == null || _pos == _curr.length) {
+    while (_curr == null || _pos == _curr!.length) {
       final ok = await _source.moveNext();
       if (!ok) {
         return true;
@@ -124,15 +124,15 @@ class DataInputStream {
       return Uint8List(0);
     }
     await _ensureNext();
-    if (_pos == 0 && num == _curr.length) {
-      _pos = _curr.length;
-      return Uint8List.fromList(_curr);
-    } else if (_pos + num <= _curr.length) {
-      final result = Uint8List.fromList(_curr.sublist(_pos, _pos + num));
+    if (_pos == 0 && num == _curr!.length) {
+      _pos = _curr!.length;
+      return Uint8List.fromList(_curr!);
+    } else if (_pos + num <= _curr!.length) {
+      final result = Uint8List.fromList(_curr!.sublist(_pos, _pos + num));
       _pos += num;
       return result;
     } else {
-      final len = _curr.length - _pos;
+      final len = _curr!.length - _pos;
       assert(len > 0 && len < num);
       final result = Uint8List(num);
       final buf = await readBytesImmutable(len);
@@ -152,15 +152,15 @@ class DataInputStream {
       return Uint8List(0);
     }
     await _ensureNext();
-    if (_pos == 0 && num == _curr.length) {
-      _pos = _curr.length;
-      return _curr;
-    } else if (_pos + num <= _curr.length) {
-      final result = _curr.sublist(_pos, _pos + num);
+    if (_pos == 0 && num == _curr!.length) {
+      _pos = _curr!.length;
+      return _curr!;
+    } else if (_pos + num <= _curr!.length) {
+      final result = _curr!.sublist(_pos, _pos + num);
       _pos += num;
       return result;
     } else {
-      final len = _curr.length - _pos;
+      final len = _curr!.length - _pos;
       assert(len > 0 && len < num);
       final result = Uint8List(num);
       var buf = await readBytesImmutable(len);
@@ -184,13 +184,13 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<int> readInt() async {
     await _ensureNext();
-    if (_curr.length - _pos < 4) {
+    if (_curr!.length - _pos < 4) {
       // If we're on a buffer boundary, keep it simple
       return (await readByteDataImmutable(4)).getInt32(0, endian);
     } else {
-      final result = _curr.buffer
+      final result = _curr!.buffer
           .asByteData()
-          .getInt32(_pos + _curr.offsetInBytes, endian);
+          .getInt32(_pos + _curr!.offsetInBytes, endian);
       _pos += 4;
       return result;
     }
@@ -202,14 +202,14 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<int> readUnsignedInt() async {
     await _ensureNext();
-    if (_curr.length - _pos < 4) {
+    if (_curr!.length - _pos < 4) {
       // If we're on a buffer boundary
       // Keep it simple
       return (await readByteDataImmutable(4)).getUint32(0, endian);
     } else {
-      final result = _curr.buffer
+      final result = _curr!.buffer
           .asByteData()
-          .getUint32(_pos + _curr.offsetInBytes, endian);
+          .getUint32(_pos + _curr!.offsetInBytes, endian);
       _pos += 4;
       return result;
     }
@@ -221,14 +221,14 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<int> readUnsignedShort() async {
     await _ensureNext();
-    if (_curr.length - _pos < 2) {
+    if (_curr!.length - _pos < 2) {
       // If we're on a buffer boundary
       // Keep it simple
       return (await readByteDataImmutable(2)).getUint16(0, endian);
     } else {
-      final result = _curr.buffer
+      final result = _curr!.buffer
           .asByteData()
-          .getUint16(_pos + _curr.offsetInBytes, endian);
+          .getUint16(_pos + _curr!.offsetInBytes, endian);
       _pos += 2;
       return result;
     }
@@ -240,14 +240,14 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<int> readShort() async {
     await _ensureNext();
-    if (_curr.length - _pos < 2) {
+    if (_curr!.length - _pos < 2) {
       // If we're on a buffer boundary
       // Keep it simple
       return (await readByteDataImmutable(2)).getInt16(0, endian);
     } else {
-      final result = _curr.buffer
+      final result = _curr!.buffer
           .asByteData()
-          .getInt16(_pos + _curr.offsetInBytes, endian);
+          .getInt16(_pos + _curr!.offsetInBytes, endian);
       _pos += 2;
       return result;
     }
@@ -258,7 +258,7 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed byte is read.
   Future<int> readUnsignedByte() async {
     await _ensureNext();
-    return _curr[_pos++];
+    return _curr![_pos++];
   }
 
   /// Reads a signed byte.  Returns an `int` between -128 and 127, inclusive.
@@ -280,14 +280,14 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<int> readLong() async {
     await _ensureNext();
-    if (_curr.length - _pos < 8) {
+    if (_curr!.length - _pos < 8) {
       // If we're on a buffer boundary
       // Keep it simple
       return (await readByteDataImmutable(8)).getInt64(0, endian);
     } else {
-      final result = _curr.buffer
+      final result = _curr!.buffer
           .asByteData()
-          .getInt64(_pos + _curr.offsetInBytes, endian);
+          .getInt64(_pos + _curr!.offsetInBytes, endian);
       _pos += 8;
       return result;
     }
@@ -303,14 +303,14 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<int> readUnsignedLong() async {
     await _ensureNext();
-    if (_curr.length - _pos < 8) {
+    if (_curr!.length - _pos < 8) {
       // If we're on a buffer boundary
       // Keep it simple
       return (await readByteDataImmutable(8)).getUint64(0, endian);
     } else {
-      final result = _curr.buffer
+      final result = _curr!.buffer
           .asByteData()
-          .getUint64(_pos + _curr.offsetInBytes, endian);
+          .getUint64(_pos + _curr!.offsetInBytes, endian);
       _pos += 8;
       return result;
     }
@@ -321,14 +321,14 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<double> readFloat() async {
     await _ensureNext();
-    if (_curr.length - _pos < 4) {
+    if (_curr!.length - _pos < 4) {
       // If we're on a buffer boundary
       // Keep it simple
       return (await readByteDataImmutable(4)).getFloat32(0, endian);
     } else {
-      final result = _curr.buffer
+      final result = _curr!.buffer
           .asByteData()
-          .getFloat32(_pos + _curr.offsetInBytes, endian);
+          .getFloat32(_pos + _curr!.offsetInBytes, endian);
       _pos += 4;
       return result;
     }
@@ -339,14 +339,14 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Future<double> readDouble() async {
     await _ensureNext();
-    if (_curr.length - _pos < 8) {
+    if (_curr!.length - _pos < 8) {
       // If we're on a buffer boundary
       // Keep it simple
       return (await readByteDataImmutable(8)).getFloat64(0, endian);
     } else {
-      final result = _curr.buffer
+      final result = _curr!.buffer
           .asByteData()
-          .getFloat64(_pos + _curr.offsetInBytes, endian);
+          .getFloat64(_pos + _curr!.offsetInBytes, endian);
       _pos += 8;
       return result;
     }
@@ -371,7 +371,7 @@ class DataInputStream {
   /// Throws [EOFException] if EOF is reached before the needed byte is read.
   Future<bool> readBoolean() async {
     await _ensureNext();
-    return _curr[_pos++] != 0;
+    return _curr![_pos++] != 0;
   }
 
   /// Returns the next unsigned byte, or -1 on EOF
@@ -379,31 +379,31 @@ class DataInputStream {
     if (await isEOF()) {
       return -1;
     } else {
-      return _curr[_pos++];
+      return _curr![_pos++];
     }
   }
 
   /// Test out the buffer logic by returning randomized, smallish chunks
   /// of data at a time.  The stream
   /// obtained from this method can be fed into another DataInputStream.
-  Stream<Uint8List> debugStream([Random random]) async* {
+  Stream<Uint8List> debugStream([Random? random]) async* {
     random ??= Random();
     while (!(await isEOF())) {
-      var remain = _curr.length - _pos;
+      var remain = _curr!.length - _pos;
       while (remain > 0) {
         final len = random.nextInt(remain + 1);
-        yield Uint8List.view(_curr.buffer, _curr.offsetInBytes + _pos, len);
+        yield Uint8List.view(_curr!.buffer, _curr!.offsetInBytes + _pos, len);
         remain -= len;
         _pos += len;
       }
-      assert(_pos == _curr.length);
+      assert(_pos == _curr!.length);
     }
   }
 
   /// Give a stream containing our as-yet-unread bytes.
   Stream<Uint8List> remaining() async* {
-    if (_curr != null && _pos < _curr.length) {
-      yield await readBytesImmutable(_curr.length - _pos);
+    if (_curr != null && _pos < _curr!.length) {
+      yield await readBytesImmutable(_curr!.length - _pos);
     }
     while (true) {
       if (!await _source.moveNext()) {
@@ -900,7 +900,7 @@ class EncryptingSink implements Sink<List<int>> {
 /// an API obeying the [Sink] contract, which includes [close] but not [flush].
 class FlushingIOSink implements Sink<List<int>> {
   final IOSink _dest;
-  Future<void> _lastClose;
+  Future<void>? _lastClose;
 
   FlushingIOSink(this._dest);
 
@@ -920,7 +920,7 @@ class FlushingIOSink implements Sink<List<int>> {
       await flush();
       return _dest.close();
     });
-    return _lastClose;
+    return _lastClose!;
   }
 
   /// Flush all pending data from the underlying [IOSink].  Returns a
@@ -933,6 +933,6 @@ class FlushingIOSink implements Sink<List<int>> {
   /// called; in this case, the results are undefined.
   Future<void> get done {
     assert(_lastClose != null);
-    return _lastClose;
+    return _lastClose!;
   }
 }

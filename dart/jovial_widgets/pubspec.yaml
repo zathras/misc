@@ -1,16 +1,17 @@
 name: jovial_widgets
 description: Miscellaneous Dart widgets
-version: 0.0.1
+version: 0.0.2
 homepage: https://bill.jovial.com/
 
 environment:
-  sdk: '>=2.7.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
     flutter:
         sdk: flutter
 
 dev_dependencies:
+    pedantic: ^1.8.0
     flutter_test:
         sdk: flutter
 
