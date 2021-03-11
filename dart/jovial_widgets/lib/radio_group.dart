@@ -11,7 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 /// A group of RadioListTile widgets presenting a choice represented
-/// by an enum type E
+/// by an enum type E.  It works fine with non-enum types too.  For example,
+/// a RadioGroup<int> works great to select things out of a list.
 class RadioGroup<E> extends StatefulWidget {
   final _RadioGroupConfig<E> _config;
   final bool enabled;

@@ -56,3 +56,7 @@
 ## 0.4.4
 
 - DataInputStream:  Avoid unnecessary copying of underlying byte data.
+
+# 0.5.0
+
+Update for null safety
