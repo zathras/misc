@@ -60,3 +60,7 @@
 # 0.5.0
 
 Update for null safety
+
+# 0.5.1
+
+Added seek and remainingCopy to io_utils
