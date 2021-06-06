@@ -447,6 +447,14 @@ class ByteBufferDataInputStream {
   ByteBufferDataInputStream(Uint8List source, [Endian endian = Endian.big])
       : this._internal(
             source is Uint8List ? source : Uint8List.fromList(source), endian);
+ 
+  /// Create a copy of ths input stream with the same underlying data
+  /// as [other] at the same position.
+  ByteBufferDataInputStream.copy(ByteBufferDataInputStream other) :
+      _source = other._source,
+      _asByteData = other._asByteData,
+      _pos = other._pos,
+      endian = other.endian;
 
   ByteBufferDataInputStream._internal(Uint8List source, this.endian)
       : _source = source,
@@ -460,6 +468,10 @@ class ByteBufferDataInputStream {
 
   /// Check if we're at end of file.
   bool isEOF() => _source.lengthInBytes <= _pos;
+
+  /// The seek position within the buffer, in bytes from the start
+  int get seek => _pos;
+  set seek(int v) => _pos = v;
 
   /// Returns a new, mutable [Uint8List] containing the desired number
   /// of bytes.
@@ -651,6 +663,15 @@ class ByteBufferDataInputStream {
     } else {
       return readUnsignedByte();
     }
+  }
+
+  /// Give the remaining data in a list that is a view on the underlying buffer
+  Uint8List remaining() =>
+    readBytesImmutable(_source.lengthInBytes - _pos);
+
+  /// Returns a new, mutable [Uint8List] containing the remaining data
+  Uint8List remainingCopy() {
+    return Uint8List.fromList(remaining());
   }
 
   /// Render this stream un-readalbe.  This positions the stream to EOF.
