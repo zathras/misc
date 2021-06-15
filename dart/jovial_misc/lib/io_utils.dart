@@ -21,20 +21,17 @@
 ///   await dis.close();
 ///   await file.delete();
 /// }
-
 /// ```
-
 library io_utils;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:async/async.dart'; // Only for Cipher*Stream
 import 'package:pointycastle/export.dart'; // Only for Cipher*Stream
 
-class EOFException implements IOException {
+class EOFException {
   final String message;
 
   const EOFException(this.message);
@@ -433,7 +430,10 @@ class DataInputStream {
 class ByteBufferDataInputStream {
   final Uint8List _source;
   final ByteData _asByteData;
-  int _pos = 0;
+
+  /// The seek position within the buffer, in bytes from the start
+  int seek = 0;
+
   static const _utf8Decoder = Utf8Decoder(allowMalformed: true);
 
   /// The current endian setting, either [Endian.big] or [Endian.little].
@@ -453,7 +453,7 @@ class ByteBufferDataInputStream {
   ByteBufferDataInputStream.copy(ByteBufferDataInputStream other) :
       _source = other._source,
       _asByteData = other._asByteData,
-      _pos = other._pos,
+      seek = other.seek,
       endian = other.endian;
 
   ByteBufferDataInputStream._internal(Uint8List source, this.endian)
@@ -464,14 +464,10 @@ class ByteBufferDataInputStream {
   /// Returns the number of bytes that can be read from the internal buffer.
   ///  If we're at EOF, returns zero, otherwise, returns a non-zero positive
   ///  integer.
-  int get bytesAvailable => _source.lengthInBytes - _pos;
+  int get bytesAvailable => _source.lengthInBytes - seek;
 
   /// Check if we're at end of file.
-  bool isEOF() => _source.lengthInBytes <= _pos;
-
-  /// The seek position within the buffer, in bytes from the start
-  int get seek => _pos;
-  set seek(int v) => _pos = v;
+  bool isEOF() => _source.lengthInBytes <= seek;
 
   /// Returns a new, mutable [Uint8List] containing the desired number
   /// of bytes.
@@ -485,11 +481,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   Uint8List readBytesImmutable(int num) {
-    if (_pos + num > _source.lengthInBytes) {
+    if (seek + num > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _source.sublist(_pos, _pos + num);
-      _pos += num;
+      final result = _source.sublist(seek, seek + num);
+      seek += num;
       return result;
     }
   }
@@ -499,11 +495,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   int readInt() {
-    if (_pos + 4 > _source.lengthInBytes) {
+    if (seek + 4 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getInt32(_pos, endian);
-      _pos += 4;
+      final result = _asByteData.getInt32(seek, endian);
+      seek += 4;
       return result;
     }
   }
@@ -513,11 +509,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   int readUnsignedInt() {
-    if (_pos + 4 > _source.lengthInBytes) {
+    if (seek + 4 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getUint32(_pos, endian);
-      _pos += 4;
+      final result = _asByteData.getUint32(seek, endian);
+      seek += 4;
       return result;
     }
   }
@@ -527,11 +523,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   int readUnsignedShort() {
-    if (_pos + 2 > _source.lengthInBytes) {
+    if (seek + 2 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getUint16(_pos, endian);
-      _pos += 2;
+      final result = _asByteData.getUint16(seek, endian);
+      seek += 2;
       return result;
     }
   }
@@ -541,11 +537,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   int readShort() {
-    if (_pos + 2 > _source.lengthInBytes) {
+    if (seek + 2 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getInt16(_pos, endian);
-      _pos += 2;
+      final result = _asByteData.getInt16(seek, endian);
+      seek += 2;
       return result;
     }
   }
@@ -554,11 +550,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed byte is read.
   int readUnsignedByte() {
-    if (_pos + 1 > _source.lengthInBytes) {
+    if (seek + 1 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getUint8(_pos);
-      _pos += 1;
+      final result = _asByteData.getUint8(seek);
+      seek += 1;
       return result;
     }
   }
@@ -568,11 +564,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed byte is read.
   int readByte() {
-    if (_pos + 1 > _source.lengthInBytes) {
+    if (seek + 1 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final b = _asByteData.getInt8(_pos);
-      _pos += 1;
+      final b = _asByteData.getInt8(seek);
+      seek += 1;
       return b;
     }
   }
@@ -582,11 +578,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   int readLong() {
-    if (_pos + 8 > _source.lengthInBytes) {
+    if (seek + 8 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getInt64(_pos, endian);
-      _pos += 8;
+      final result = _asByteData.getInt64(seek, endian);
+      seek += 8;
       return result;
     }
   }
@@ -600,11 +596,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   int readUnsignedLong() {
-    if (_pos + 8 > _source.lengthInBytes) {
+    if (seek + 8 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getUint64(_pos, endian);
-      _pos += 8;
+      final result = _asByteData.getUint64(seek, endian);
+      seek += 8;
       return result;
     }
   }
@@ -613,11 +609,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   double readFloat() {
-    if (_pos + 4 > _source.lengthInBytes) {
+    if (seek + 4 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getFloat32(_pos, endian);
-      _pos += 4;
+      final result = _asByteData.getFloat32(seek, endian);
+      seek += 4;
       return result;
     }
   }
@@ -626,11 +622,11 @@ class ByteBufferDataInputStream {
   ///
   /// Throws [EOFException] if EOF is reached before the needed bytes are read.
   double readDouble() {
-    if (_pos + 8 > _source.lengthInBytes) {
+    if (seek + 8 > _source.lengthInBytes) {
       throw EOFException('Attempt to read beyond end of input');
     } else {
-      final result = _asByteData.getFloat64(_pos, endian);
-      _pos += 8;
+      final result = _asByteData.getFloat64(seek, endian);
+      seek += 8;
       return result;
     }
   }
@@ -667,7 +663,7 @@ class ByteBufferDataInputStream {
 
   /// Give the remaining data in a list that is a view on the underlying buffer
   Uint8List remaining() =>
-    readBytesImmutable(_source.lengthInBytes - _pos);
+    readBytesImmutable(_source.lengthInBytes - seek);
 
   /// Returns a new, mutable [Uint8List] containing the remaining data
   Uint8List remainingCopy() {
@@ -676,7 +672,7 @@ class ByteBufferDataInputStream {
 
   /// Render this stream un-readalbe.  This positions the stream to EOF.
   void close() {
-    _pos = _source.lengthInBytes;
+    seek = _source.lengthInBytes;
   }
 }
 
@@ -770,7 +766,7 @@ class DataOutputSink {
   /// Write the given string as an unsigned short giving the byte length,
   /// followed by that many bytes containing the UTF8 encoding.
   /// The short is written using the current [endian] format.
-  /// This should be compatable with
+  /// This should be compatible with
   /// Java's `DataOutputStream.writeUTF8()`, as long as the string contains no
   /// nulls and no UTF formats beyond the 1, 2 and 3 byte formats.  See
   /// https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/io/DataInput.html#modified-utf-8
@@ -913,47 +909,5 @@ class EncryptingSink implements Sink<List<int>> {
       _cipher.processBlock(block8, i + offset, out, i);
     }
     _dest.add(out);
-  }
-}
-
-/// A wrapper around an [IOSink] that ensures that all data is flushed before
-/// the [IOSink] is closed.  This is needed when an [IOSink] is being used with
-/// an API obeying the [Sink] contract, which includes [close] but not [flush].
-class FlushingIOSink implements Sink<List<int>> {
-  final IOSink _dest;
-  Future<void>? _lastClose;
-
-  FlushingIOSink(this._dest);
-
-  @override
-  void add(List<int> data) {
-    assert(_lastClose == null);
-    _dest.add(data);
-  }
-
-  /// Flush all pending data from the underlying [IOSink], and close it.
-  /// Returns a future that completes when the flush and close are finished.
-  /// Calling this method more than once has no effect.
-  /// See also [done].
-  @override
-  Future<void> close() {
-    _lastClose ??= Future(() async {
-      await flush();
-      return _dest.close();
-    });
-    return _lastClose!;
-  }
-
-  /// Flush all pending data from the underlying [IOSink].  Returns a
-  /// [Future] that completes when the flush is finished.
-  /// See [IOSink.flush].
-  Future<void> flush() => _dest.flush();
-
-  /// Get a future that will complete the previous [close]
-  /// operation has completed.  It is an error if [close] has not been
-  /// called; in this case, the results are undefined.
-  Future<void> get done {
-    assert(_lastClose != null);
-    return _lastClose!;
   }
 }

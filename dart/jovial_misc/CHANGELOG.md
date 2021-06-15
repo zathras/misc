@@ -64,3 +64,12 @@ Update for null safety
 # 0.5.1
 
 Added seek and remainingCopy to io_utils
+
+# 0.6.0
+
+Made io_utils work on JS runtime by:
+- Making `EOFException` not subclass IOException
+  - This is an API change, since `catch IOException` will no longer catch `EOFException`.
+- making io_utils not depend on dart.io, so it can be used in the browser
+  - moved `FlushingIOSink` to a new package.  This is an API change,
+    since client imports will need to be adjusted.
