@@ -73,3 +73,6 @@ Made io_utils work on JS runtime by:
 - making io_utils not depend on dart.io, so it can be used in the browser
   - moved `FlushingIOSink` to a new package.  This is an API change,
     since client imports will need to be adjusted.
+
+# 0.6.1
+dartfmt -w

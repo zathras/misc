@@ -60,7 +60,7 @@ class DataInputStream {
   // EOF.  Besides, as the great Japanese philosopher
   // Gudetama famously said, "meh."   (⊃◜⌓◝⊂)
   final StreamIterator<List<int>> _source;
-  Uint8List? _curr;         // Set up in isEOF
+  Uint8List? _curr; // Set up in isEOF
   int _pos = 0;
   static const _utf8Decoder = Utf8Decoder(allowMalformed: true);
 
@@ -447,14 +447,14 @@ class ByteBufferDataInputStream {
   ByteBufferDataInputStream(Uint8List source, [Endian endian = Endian.big])
       : this._internal(
             source is Uint8List ? source : Uint8List.fromList(source), endian);
- 
+
   /// Create a copy of ths input stream with the same underlying data
   /// as [other] at the same position.
-  ByteBufferDataInputStream.copy(ByteBufferDataInputStream other) :
-      _source = other._source,
-      _asByteData = other._asByteData,
-      seek = other.seek,
-      endian = other.endian;
+  ByteBufferDataInputStream.copy(ByteBufferDataInputStream other)
+      : _source = other._source,
+        _asByteData = other._asByteData,
+        seek = other.seek,
+        endian = other.endian;
 
   ByteBufferDataInputStream._internal(Uint8List source, this.endian)
       : _source = source,
@@ -662,8 +662,7 @@ class ByteBufferDataInputStream {
   }
 
   /// Give the remaining data in a list that is a view on the underlying buffer
-  Uint8List remaining() =>
-    readBytesImmutable(_source.lengthInBytes - seek);
+  Uint8List remaining() => readBytesImmutable(_source.lengthInBytes - seek);
 
   /// Returns a new, mutable [Uint8List] containing the remaining data
   Uint8List remainingCopy() {

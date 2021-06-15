@@ -1,6 +1,6 @@
 name: jovial_misc
 description: Miscellaneous Dart libraries, including interoperability with java.io.DataInputStream and java.io.DataOutputStream.
-version: 0.6.0
+version: 0.6.1
 homepage: https://bill.jovial.com/
 
 environment:

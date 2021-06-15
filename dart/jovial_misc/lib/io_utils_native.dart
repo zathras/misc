@@ -1,4 +1,3 @@
-
 ///
 /// A small library that was split off of `io_utils` when Flutter on the browser
 /// became more mature.  The small utility class in this library depends on
