@@ -1,13 +1,13 @@
 name: jovial_misc_native
-description: Tiny library split off from jovial_misc to make it clear that the rest of jovial_misc works on the JS runtime.
-version: 0.7.0
+description: Library split off from jovial_misc to make it clear that the rest of jovial_misc works on the JS runtime.
+version: 0.8.0
 homepage: https://bill.jovial.com/
 
 environment:
   sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
-    jovial_misc: ^0.7.0
+    jovial_misc: ^0.8.0
     pointycastle: ^3.1.0
     intl: ^0.17.0
     async: ^2.5.0

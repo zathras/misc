@@ -4,7 +4,7 @@
 import 'dart:async';
 import 'package:test/test.dart';
 
-import 'package:jovial_misc/isolate_stream.dart';
+import 'package:jovial_misc_native/isolate_stream.dart';
 
 class StringGenerator extends IsolateStreamGenerator<String> {
   final List<String> _strings;

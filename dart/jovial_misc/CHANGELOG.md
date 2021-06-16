@@ -82,3 +82,8 @@ dartfmt -w
   clear that the rest of this is fine on the JS runtime.
   - This is an API change, since client pubspec.yaml files need to add the new
     jovial_misc_native entry.  Sigh.
+
+# 0.8.0
+- Split off the isolate stuff to `jovial_misc_native`
+  - This is an API change, since client pubspec.yaml files need to add the new
+    jovial_misc_native entry.
