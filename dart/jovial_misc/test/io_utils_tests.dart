@@ -12,7 +12,6 @@ import 'package:intl/intl.dart';
 import 'package:pointycastle/export.dart';
 
 import 'package:jovial_misc/io_utils.dart';
-import 'package:jovial_misc/io_utils_native.dart';
 import 'package:jovial_misc/isolate_stream.dart';
 
 const _paranoia = 1;
@@ -137,24 +136,9 @@ class _BigTestGenerator extends IsolateByteStreamGenerator {
   }
 }
 
-void _test_flushing_iosink() async {
-  final file = File.fromUri(Directory.systemTemp.uri.resolve('test.dat'));
-  final flushable = FlushingIOSink(file.openWrite());
-  final out = DataOutputSink(flushable);
-  out.writeUTF8('Hello, world.');
-  out.close();
-  await flushable.done;
-
-  final dis = DataInputStream(file.openRead());
-  expect(await dis.readUTF8(), 'Hello, world.');
-  await dis.close();
-  await file.delete();
-}
-
 Future<void> add_io_utils_tests() async {
   final rand = Random(0x2a); // Give it a seed so any bugs are repeatable
 
-  test('flushing_iosink', _test_flushing_iosink);
   test('empty', () => _testStream(true, [[]]));
   test(
       'short',

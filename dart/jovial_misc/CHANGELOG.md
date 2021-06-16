@@ -76,3 +76,9 @@ Made io_utils work on JS runtime by:
 
 # 0.6.1
 dartfmt -w
+
+# 0.7.0
+- Split off `FlushingIOSink` to an entirely different `pub.dev` listing, so that it's
+  clear that the rest of this is fine on the JS runtime.
+  - This is an API change, since client pubspec.yaml files need to add the new
+    jovial_misc_native entry.  Sigh.
