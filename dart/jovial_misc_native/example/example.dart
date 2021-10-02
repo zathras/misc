@@ -4,14 +4,13 @@ import 'package:intl/intl.dart';
 import 'package:jovial_misc/io_utils.dart';
 import 'package:jovial_misc_native/io_utils_native.dart';
 import 'package:jovial_misc_native/isolate_stream.dart';
-import 'package:pedantic/pedantic.dart';
 
 ///
 /// Example of using [FlushingIOSink] with [DataOutputSink] and
 /// [DataInputStream] to encode values that are compatible with
 /// `java.io.DataInputStream` and `java.io.DataOutputStream`
 ///
-Future<void> data_io_stream_example() async {
+Future<void> dataIoStreamExample() async {
   final file = File.fromUri(Directory.systemTemp.uri.resolve('test.dat'));
   final sink = FlushingIOSink(file.openWrite());
   final out = DataOutputSink(sink);
@@ -30,7 +29,7 @@ Future<void> data_io_stream_example() async {
 /// generator function in an isolate.  We use FizzBuzz as a
 /// stand-in for a computationally intensive series of values.
 ///
-Future<void> isolate_stream_example() async {
+Future<void> isolateStreamExample() async {
   const max = 25;
   final fmt = NumberFormat();
   const iterationPause = Duration(milliseconds: 250);
@@ -86,7 +85,7 @@ class FizzBuzzGenerator extends IsolateStreamGenerator<String> {
 /// Run the examples
 ///
 void main() async {
-  await data_io_stream_example();
+  await dataIoStreamExample();
   print('');
-  await isolate_stream_example();
+  await isolateStreamExample();
 }

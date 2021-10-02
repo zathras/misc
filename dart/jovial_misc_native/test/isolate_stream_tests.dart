@@ -25,7 +25,7 @@ class StringGenerator extends IsolateStreamGenerator<String> {
   int sizeOf(String value) => 1; // Count strings sent
 }
 
-Future<void> add_isolate_stream_tests() async {
+Future<void> addIsolateStreamTests() async {
   for (var size = 0; size < 7; size++) {
     test('small IsolateStream - buffer size $size', () async {
       final testData = ['hello', 'isolate', 'world', 'five', 'elements'];

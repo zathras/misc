@@ -7,11 +7,11 @@ void main() {
   group('io_utils', () {
     setUp(() {});
 
-    add_io_utils_tests();
+    addIoUtilsTests();
   });
   group('isolate_stream', () {
     setUp(() {});
 
-    add_isolate_stream_tests();
+    addIsolateStreamTests();
   });
 }

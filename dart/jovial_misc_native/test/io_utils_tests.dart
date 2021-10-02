@@ -24,7 +24,7 @@ Uint8List _nextBytes(Random rand, int size) {
   return result;
 }
 
-void _test_flushing_iosink() async {
+void _testFlushingIosink() async {
   final file = File.fromUri(Directory.systemTemp.uri.resolve('test.dat'));
   final flushable = FlushingIOSink(file.openWrite());
   final out = DataOutputSink(flushable);
@@ -100,10 +100,10 @@ class _BigTestGenerator extends IsolateByteStreamGenerator {
   }
 }
 
-Future<void> add_io_utils_tests() async {
+Future<void> addIoUtilsTests() async {
   final rand = Random(0x2a); // Give it a seed so any bugs are repeatable
 
-  test('flushing_iosink', _test_flushing_iosink);
+  test('flushing_iosink', _testFlushingIosink);
 
   // Create an isolate so we can stream data through
   // encryption/decryption without buffering it all in memory.  These
