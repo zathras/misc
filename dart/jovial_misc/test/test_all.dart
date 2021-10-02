@@ -6,6 +6,6 @@ void main() {
   group('io_utils', () {
     setUp(() {});
 
-    add_io_utils_tests();
+    addIoUtilsTests();
   });
 }

@@ -7,7 +7,7 @@ import 'package:jovial_misc/io_utils.dart';
 /// encode values that are compatible with `java.io.DataInputStream`
 /// and `java.io.DataOutputStream`
 ///
-Future<void> data_io_stream_example() async {
+Future<void> dataIoStreamExample() async {
   final file = File.fromUri(Directory.systemTemp.uri.resolve('test.dat'));
   final sink = file.openWrite();
   final out = DataOutputSink(sink);
@@ -24,5 +24,5 @@ Future<void> data_io_stream_example() async {
 /// Run the example
 ///
 void main() async {
-  await data_io_stream_example();
+  await dataIoStreamExample();
 }

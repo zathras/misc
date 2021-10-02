@@ -87,3 +87,6 @@ dartfmt -w
 - Split off the isolate stuff to `jovial_misc_native`
   - This is an API change, since client pubspec.yaml files need to add the new
     jovial_misc_native entry.
+
+# 0.8.1
+- Migrated from pedantic to new lints introduced with SDK 1.4.

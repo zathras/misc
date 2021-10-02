@@ -8,7 +8,6 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
-import 'package:intl/intl.dart';
 import 'package:pointycastle/export.dart';
 
 import 'package:jovial_misc/io_utils.dart';
@@ -27,7 +26,9 @@ Uint8List _nextBytes(Random rand, int size) {
 /// Test encryption/decryption in memory
 void _testStream(bool chatter, List<List<int>> testData) async {
   final goalBuilder = BytesBuilder(copy: false);
-  testData.forEach((e) => goalBuilder.add(e));
+  for (final e in testData) {
+    goalBuilder.add(e);
+  }
   final goal = goalBuilder.takeBytes();
 
   final srand = Random.secure();
@@ -51,7 +52,9 @@ void _testStream(bool chatter, List<List<int>> testData) async {
   // byte array.
   final encrypted = ByteAccumulatorSink();
   final encrypt = EncryptingSink(encryptCipher, encrypted, PKCS7Padding());
-  testData.forEach((e) => encrypt.add(e));
+  for (var e in testData) {
+    encrypt.add(e);
+  }
   encrypt.close();
   if (chatter) {
     print('Encrypted: ${encrypted.bytes}');
@@ -73,7 +76,7 @@ void _testStream(bool chatter, List<List<int>> testData) async {
   }
 }
 
-Future<void> add_io_utils_tests() async {
+Future<void> addIoUtilsTests() async {
   final rand = Random(0x2a); // Give it a seed so any bugs are repeatable
 
   test('empty', () => _testStream(true, [[]]));
