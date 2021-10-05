@@ -1,8 +1,9 @@
 
-include: package:pedantic/analysis_options.yaml
+include: package:flutter_lints/flutter.yaml
 
 linter:
     rules:
+       unawaited_futures: true
        omit_local_variables_types: ignore
        await_only_futures: true
        camel_case_types: true

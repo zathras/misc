@@ -29,8 +29,7 @@ class RadioGroup<E> extends StatefulWidget {
       : enabled = enabled,
         _config = _RadioGroupConfig<E>(
             values, label, getValue, setValue, itemHeight, textDirection),
-        super(key: key) {
-  }
+        super(key: key) {}
 
   @override
   _RadioGroupState<E> createState() {
