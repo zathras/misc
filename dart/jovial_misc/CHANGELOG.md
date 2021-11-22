@@ -90,3 +90,6 @@ dartfmt -w
 
 # 0.8.1
 - Migrated from pedantic to new lints introduced with SDK 1.4.
+
+# 0.8.2
+- Added `AsyncCanonicalizingFetcher`
