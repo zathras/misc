@@ -66,7 +66,7 @@ abstract class AsyncCanonicalizingFetcher<K, V> {
         } finally {
           final check = _pending.remove(key);
           assert(check != null);
-          // This finally is block guaranteed to execute after the Future 
+          // This finally block is guaranteed to execute after the Future 
           // created by the ifAbsent function has been stored in _pending, 
           // because the await in the try block always suspends the function.
           // See the Dart language specification, version 2.10, section 17.33
