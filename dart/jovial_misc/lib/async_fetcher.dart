@@ -25,7 +25,7 @@ import 'package:meta/meta.dart';
 /// ```
 /// If a resource associated with some key k is being fetched over the
 /// network, and a second request for an equivalent key k2 comes in
-/// while the network operation for k in in ongoing,
+/// while the network operation for k is ongoing,
 /// the above algorithm would fetch the resource twice.  This can be avoided
 /// by using [get] from a subclass of `AsyncCanonicalilzingFetcher<Thing, Key>`
 /// that implements [create] to load a `Thing` over the network, like this:

@@ -93,3 +93,6 @@ dartfmt -w
 
 # 0.8.2
 - Added `AsyncCanonicalizingFetcher`
+
+# 0.8.3
+- Fixed typo in documentation
