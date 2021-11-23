@@ -96,3 +96,7 @@ dartfmt -w
 
 # 0.8.3
 - Fixed typo in documentation
+
+# 0.8.4
+- Added smoke test for AsyncCanonicalizingFetcher
+- Used marginally more efficient Map.putIfAbsent method in AsyncCanonicalizingFetcher

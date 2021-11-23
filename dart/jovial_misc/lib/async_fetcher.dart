@@ -60,7 +60,7 @@ abstract class AsyncCanonicalizingFetcher<K, V> {
   /// [Future] identical to the one returned for the prior call will be
   /// returned.
   ///
-  Future<V> get(K key) => _pending.update(key, (v) => v, ifAbsent: () async {
+  Future<V> get(K key) => _pending.putIfAbsent(key, () async {
         try {
           return await create(key);
         } finally {
