@@ -100,3 +100,5 @@ dartfmt -w
 # 0.8.4
 - Added smoke test for AsyncCanonicalizingFetcher
 - Used marginally more efficient Map.putIfAbsent method in AsyncCanonicalizingFetcher
+- Add CircularBuffer
+- Broaden `ByteBufferDataInputStream` constructor to take `List<int>`.

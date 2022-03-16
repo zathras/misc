@@ -444,7 +444,7 @@ class ByteBufferDataInputStream {
   /// Create a stream that takes its data from source with the given
   /// initial [endian] setting.  Choose [Endian.big]
   /// for interoperability with `java.io.DataInputStream`.
-  ByteBufferDataInputStream(Uint8List source, [Endian endian = Endian.big])
+  ByteBufferDataInputStream(List<int> source, [Endian endian = Endian.big])
       : this._internal(
             source is Uint8List ? source : Uint8List.fromList(source), endian);
 
