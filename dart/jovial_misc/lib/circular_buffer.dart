@@ -1,5 +1,5 @@
 ///
-/// Misc. collection libraries
+/// Misc. collection classes
 ///
 library collection;
 
