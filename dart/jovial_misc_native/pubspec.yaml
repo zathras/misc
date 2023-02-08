@@ -1,6 +1,6 @@
 name: jovial_misc_native
 description: Library split off from jovial_misc to make it clear that the rest of jovial_misc works on the JS runtime.
-version: 0.8.1
+version: 0.8.2
 homepage: https://bill.jovial.com/
 
 environment:

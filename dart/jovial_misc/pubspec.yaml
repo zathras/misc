@@ -16,7 +16,6 @@ dependencies:
 dev_dependencies:
   lints: ^1.0.1
   test: ^1.16.6
-  intl: ^0.18.0
 
 repository: https://github.com/zathras/misc/tree/master/dart/jovial_misc
 

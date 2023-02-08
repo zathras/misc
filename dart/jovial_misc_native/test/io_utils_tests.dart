@@ -47,7 +47,7 @@ void bigTest(Random rand, int numItems) async {
 
   final Stream<Uint8List> encrypted = IsolateStream<Uint8List>(
       _BigTestGenerator(rand.nextInt(1 << 32), key, iv, numItems));
-  final decryptCipher = CBCBlockCipher(AESFastEngine())
+  final decryptCipher = CBCBlockCipher(AESEngine())
     ..init(false, ParametersWithIV(KeyParameter(key), iv));
   final decrypt = DecryptingStream(decryptCipher, encrypted, PKCS7Padding());
   final dis = DataInputStream(decrypt);
@@ -77,7 +77,7 @@ class _BigTestGenerator extends IsolateByteStreamGenerator {
   @override
   Future<void> generate() async {
     final rand = Random(seed);
-    final encryptCipher = CBCBlockCipher(AESFastEngine())
+    final encryptCipher = CBCBlockCipher(AESEngine())
       ..init(true, ParametersWithIV(KeyParameter(key), iv));
     final encrypt = EncryptingSink(encryptCipher, this, PKCS7Padding());
     final ds = DataOutputSink(encrypt);
