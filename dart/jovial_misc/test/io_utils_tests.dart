@@ -2,7 +2,6 @@
 /// to a test harness by calling add_io_utils_tests().
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:test/test.dart';
@@ -34,9 +33,9 @@ void _testStream(bool chatter, List<List<int>> testData) async {
   final srand = Random.secure();
   final key = _nextBytes(srand, 16);
   final iv = _nextBytes(srand, 16);
-  final encryptCipher = CBCBlockCipher(AESFastEngine())
+  final encryptCipher = CBCBlockCipher(AESEngine())
     ..init(true, ParametersWithIV(KeyParameter(key), iv)); // true=encrypt
-  final decryptCipher = CBCBlockCipher(AESFastEngine())
+  final decryptCipher = CBCBlockCipher(AESEngine())
     ..init(false, ParametersWithIV(KeyParameter(key), iv));
 
   if (chatter) {
