@@ -102,3 +102,6 @@ dartfmt -w
 - Used marginally more efficient Map.putIfAbsent method in AsyncCanonicalizingFetcher
 - Add CircularBuffer
 - Broaden `ByteBufferDataInputStream` constructor to take `List<int>`.
+
+# 0.8.5
+- Remove ununsed dependency on intl
