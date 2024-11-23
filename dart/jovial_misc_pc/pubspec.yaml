@@ -1,0 +1,23 @@
+name: jovial_misc_pc
+description: Library split off from jovial_misc to isolate PointyCastle dependencies
+version: 0.9.0-rc.2
+homepage: https://bill.jovial.com/
+
+environment:
+  sdk: '>=2.14.0 <4.0.0'
+
+dependencies:
+    jovial_misc: ^0.9.0
+    pointycastle: ^3.1.0
+    intl: ^0.19.0
+    async: ^2.5.0
+    collection: ^1.14.11
+    convert: ^3.0.0
+
+dev_dependencies:
+  test: ^1.16.6
+  lints: ^1.0.1
+
+repository: https://github.com/zathras/misc/tree/master/dart/jovial_misc_pc
+
+issues: https://github.com/zathras/misc/issues

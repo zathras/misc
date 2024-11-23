@@ -105,3 +105,6 @@ dartfmt -w
 
 # 0.8.5
 - Remove ununsed dependency on intl
+
+# 0.9.0
+- Split off encrypting/decrypting streams to `jovial_misc_pc`
