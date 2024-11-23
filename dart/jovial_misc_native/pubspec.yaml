@@ -1,15 +1,14 @@
 name: jovial_misc_native
 description: Library split off from jovial_misc to make it clear that the rest of jovial_misc works on the JS runtime.
-version: 0.8.2
+version: 0.9.0
 homepage: https://bill.jovial.com/
 
 environment:
-  sdk: '>=2.14.0 <3.0.0'
+  sdk: '>=2.15.0 <4.0.0'
 
 dependencies:
-    jovial_misc: ^0.8.1
-    pointycastle: ^3.1.0
-    intl: ^0.18.0
+    jovial_misc: ^0.9.0
+    intl: ^0.19.0
     async: ^2.5.0
     collection: ^1.14.11
     convert: ^3.0.0
@@ -17,6 +16,8 @@ dependencies:
 dev_dependencies:
   test: ^1.16.6
   lints: ^1.0.1
+  jovial_misc_pc: ^0.9.0
+  pointycastle: ^3.1.0
 
 repository: https://github.com/zathras/misc/tree/master/dart/jovial_misc_native
 

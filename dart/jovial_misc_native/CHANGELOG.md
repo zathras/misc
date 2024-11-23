@@ -10,3 +10,6 @@ Migrate to the new lints indroduced with SDK 1.4
 
 # 0.8.2
 Update library dependency (intl)
+
+# 0.9.0
+Update dependencies
