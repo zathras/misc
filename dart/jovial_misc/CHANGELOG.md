@@ -108,3 +108,6 @@ dartfmt -w
 
 # 0.9.0
 - Split off encrypting/decrypting streams to `jovial_misc_pc`
+
+# 0.9.1
+- Update dependencies

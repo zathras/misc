@@ -418,7 +418,7 @@ class DataInputStream {
   }
 }
 
-/// A wrapper around a List<int>, for synchronous reading
+/// A wrapper around an int List, for synchronous reading
 /// of typed binary data from a byte array.  This is similar to a
 /// `java.io.DataInputStream` over a `java.io.ByteArrayInputStream`.
 ///
