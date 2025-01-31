@@ -1,5 +1,5 @@
-/// This module contains a set of tests for isolate_stream.dart.  Add them
-/// to a test harness by calling add_isolate_stream_tests().
+// This module contains a set of tests for isolate_stream.dart.  Add them
+// to a test harness by calling add_isolate_stream_tests().
 
 import 'dart:async';
 import 'package:test/test.dart';

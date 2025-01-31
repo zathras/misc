@@ -1,5 +1,5 @@
-/// This module contains a set of tests for io_utils.dart.  Add them
-/// to a test harness by calling add_io_utils_tests().
+// This module contains a set of tests for io_utils.dart.  Add them
+// to a test harness by calling add_io_utils_tests().
 
 import 'dart:async';
 import 'dart:io';

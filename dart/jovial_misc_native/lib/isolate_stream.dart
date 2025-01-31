@@ -99,7 +99,7 @@ class IsolateStream<T> extends DelegatingStream<T> {
   /// isolate over a [SendPort].  The generator must therefore obey the
   /// restrictions described for sending an object instance in the dart
   /// VM described in [SendPort.send].  The generator must be a subclass
-  /// of IsolateStreamGenerator<T>; it cannot merely implement the interface.
+  /// of [IsolateStreamGenerator]; it cannot merely implement the interface.
   ///
   /// The generator sends objects of type T to our stream by calling
   /// appropriate inherited methods of [IsolateStreamGenerator].
@@ -126,7 +126,7 @@ class IsolateStream<T> extends DelegatingStream<T> {
 /// with [Isolate.spawn].  See the restrictions in [SendPort.send] about
 /// sending object instances.
 ///
-/// Note that this object is a Sink<T>, so it can be passed to function
+/// Note that this object is a `Sink`, so it can be passed to function
 /// that send data to a Sink.  If this is done, however, it is the
 /// client's responsibility to see that [flushIfNeeded] is called on a
 /// regular basis.
