@@ -111,3 +111,6 @@ dartfmt -w
 
 # 0.9.1
 - Update dependencies
+
+# 0.9.2
+- Force pub.dev to run analysis (spurios bug on Google's end).
