@@ -1,0 +1,28 @@
+name: android_haptics
+description: "Minimal haptic feedback for Android"
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: ^3.8.1
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.jovial.android_haptics
+        pluginClass: AndroidHapticsPlugin

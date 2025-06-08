@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="com.jovial.android_haptics">
+
+   <uses-permission android:name="android.permission.VIBRATE"/>
+</manifest>
