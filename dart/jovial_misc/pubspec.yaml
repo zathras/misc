@@ -1,10 +1,10 @@
 name: jovial_misc
 description: Miscellaneous Dart libraries, including interoperability with java.io.DataInputStream and java.io.DataOutputStream.
-version: 0.9.2
+version: 0.10.0
 homepage: https://bill.jovial.com/
 
 environment:
-  sdk: '>=2.14.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
     async: ^2.5.0
@@ -13,7 +13,7 @@ dependencies:
     meta: ^1.7.0
 
 dev_dependencies:
-  lints: ^5.0.0
+  lints: ^6.0.0
   test: ^1.16.6
 
 repository: https://github.com/zathras/misc/tree/master/dart/jovial_misc

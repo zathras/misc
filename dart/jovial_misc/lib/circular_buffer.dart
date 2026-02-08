@@ -1,7 +1,7 @@
 ///
 /// Misc. collection classes
 ///
-library collection;
+library;
 
 import 'dart:collection';
 
@@ -39,7 +39,7 @@ class CircularBuffer<T> extends ListMixin<T> {
   /// ```
   ///
   CircularBuffer.create(int capacity, T empty)
-      : _store = List.filled(capacity, empty);
+    : _store = List.filled(capacity, empty);
 
   @override
   int get length => (_last == -1) ? 0 : ((_last - _first) % _store.length + 1);
@@ -51,7 +51,7 @@ class CircularBuffer<T> extends ListMixin<T> {
     } else if (v == 0) {
       reset();
     } else {
-      _first = (_last + 1 - v);
+      _last = (_first + v - 1) % _store.length;
     }
   }
 
@@ -117,5 +117,16 @@ class CircularBuffer<T> extends ListMixin<T> {
     }
     index = (index + _first) % _store.length;
     _store[index] = value;
+  }
+
+  ///
+  /// Remove the last element, and clear the underlying list with
+  /// the empty value.
+  ///
+  T removeLastAndClear(T empty) {
+    final result = removeLast();
+    final index = (length + _first) % _store.length; // One past new last
+    _store[index] = empty;
+    return result;
   }
 }

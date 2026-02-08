@@ -20,7 +20,8 @@
 ///   await file.delete();
 /// }
 /// ```
-library io_utils;
+
+library;
 
 import 'dart:async';
 import 'dart:convert';
@@ -69,7 +70,7 @@ class DataInputStream {
   /// initial [endian] setting.  Choose [Endian.big]
   /// for interoperability with `java.io.DataInputStream`.
   DataInputStream(Stream<List<int>> source, [this.endian = Endian.big])
-      : _source = StreamIterator<List<int>>(source);
+    : _source = StreamIterator<List<int>>(source);
 
   /// Returns the number of bytes that can be read from the internal buffer.
   ///  If we're at EOF, returns zero, otherwise, returns a non-zero positive
@@ -181,9 +182,10 @@ class DataInputStream {
       // If we're on a buffer boundary, keep it simple
       return (await readByteDataImmutable(4)).getInt32(0, endian);
     } else {
-      final result = _curr!.buffer
-          .asByteData()
-          .getInt32(_pos + _curr!.offsetInBytes, endian);
+      final result = _curr!.buffer.asByteData().getInt32(
+        _pos + _curr!.offsetInBytes,
+        endian,
+      );
       _pos += 4;
       return result;
     }
@@ -200,9 +202,10 @@ class DataInputStream {
       // Keep it simple
       return (await readByteDataImmutable(4)).getUint32(0, endian);
     } else {
-      final result = _curr!.buffer
-          .asByteData()
-          .getUint32(_pos + _curr!.offsetInBytes, endian);
+      final result = _curr!.buffer.asByteData().getUint32(
+        _pos + _curr!.offsetInBytes,
+        endian,
+      );
       _pos += 4;
       return result;
     }
@@ -219,9 +222,10 @@ class DataInputStream {
       // Keep it simple
       return (await readByteDataImmutable(2)).getUint16(0, endian);
     } else {
-      final result = _curr!.buffer
-          .asByteData()
-          .getUint16(_pos + _curr!.offsetInBytes, endian);
+      final result = _curr!.buffer.asByteData().getUint16(
+        _pos + _curr!.offsetInBytes,
+        endian,
+      );
       _pos += 2;
       return result;
     }
@@ -238,9 +242,10 @@ class DataInputStream {
       // Keep it simple
       return (await readByteDataImmutable(2)).getInt16(0, endian);
     } else {
-      final result = _curr!.buffer
-          .asByteData()
-          .getInt16(_pos + _curr!.offsetInBytes, endian);
+      final result = _curr!.buffer.asByteData().getInt16(
+        _pos + _curr!.offsetInBytes,
+        endian,
+      );
       _pos += 2;
       return result;
     }
@@ -278,9 +283,10 @@ class DataInputStream {
       // Keep it simple
       return (await readByteDataImmutable(8)).getInt64(0, endian);
     } else {
-      final result = _curr!.buffer
-          .asByteData()
-          .getInt64(_pos + _curr!.offsetInBytes, endian);
+      final result = _curr!.buffer.asByteData().getInt64(
+        _pos + _curr!.offsetInBytes,
+        endian,
+      );
       _pos += 8;
       return result;
     }
@@ -301,9 +307,10 @@ class DataInputStream {
       // Keep it simple
       return (await readByteDataImmutable(8)).getUint64(0, endian);
     } else {
-      final result = _curr!.buffer
-          .asByteData()
-          .getUint64(_pos + _curr!.offsetInBytes, endian);
+      final result = _curr!.buffer.asByteData().getUint64(
+        _pos + _curr!.offsetInBytes,
+        endian,
+      );
       _pos += 8;
       return result;
     }
@@ -319,9 +326,10 @@ class DataInputStream {
       // Keep it simple
       return (await readByteDataImmutable(4)).getFloat32(0, endian);
     } else {
-      final result = _curr!.buffer
-          .asByteData()
-          .getFloat32(_pos + _curr!.offsetInBytes, endian);
+      final result = _curr!.buffer.asByteData().getFloat32(
+        _pos + _curr!.offsetInBytes,
+        endian,
+      );
       _pos += 4;
       return result;
     }
@@ -337,9 +345,10 @@ class DataInputStream {
       // Keep it simple
       return (await readByteDataImmutable(8)).getFloat64(0, endian);
     } else {
-      final result = _curr!.buffer
-          .asByteData()
-          .getFloat64(_pos + _curr!.offsetInBytes, endian);
+      final result = _curr!.buffer.asByteData().getFloat64(
+        _pos + _curr!.offsetInBytes,
+        endian,
+      );
       _pos += 8;
       return result;
     }
@@ -441,21 +450,25 @@ class ByteBufferDataInputStream {
   /// initial [endian] setting.  Choose [Endian.big]
   /// for interoperability with `java.io.DataInputStream`.
   ByteBufferDataInputStream(List<int> source, [Endian endian = Endian.big])
-      : this._internal(
-            source is Uint8List ? source : Uint8List.fromList(source), endian);
+    : this._internal(
+        source is Uint8List ? source : Uint8List.fromList(source),
+        endian,
+      );
 
   /// Create a copy of ths input stream with the same underlying data
   /// as [other] at the same position.
   ByteBufferDataInputStream.copy(ByteBufferDataInputStream other)
-      : _source = other._source,
-        _asByteData = other._asByteData,
-        seek = other.seek,
-        endian = other.endian;
+    : _source = other._source,
+      _asByteData = other._asByteData,
+      seek = other.seek,
+      endian = other.endian;
 
   ByteBufferDataInputStream._internal(Uint8List source, this.endian)
-      : _source = source,
-        _asByteData = source.buffer
-            .asByteData(source.offsetInBytes, source.lengthInBytes);
+    : _source = source,
+      _asByteData = source.buffer.asByteData(
+        source.offsetInBytes,
+        source.lengthInBytes,
+      );
 
   /// Returns the number of bytes that can be read from the internal buffer.
   ///  If we're at EOF, returns zero, otherwise, returns a non-zero positive
@@ -772,7 +785,8 @@ class DataOutputSink {
     final utf8 = (const Utf8Encoder()).convert(s);
     if (utf8.length > 0xffffffff) {
       throw ArgumentError(
-          'Byte length ${utf8.length} exceeds maximum of ${0xffffffff}');
+        'Byte length ${utf8.length} exceeds maximum of ${0xffffffff}',
+      );
     }
     writeUnsignedShort(utf8.length);
     _dest.add(utf8);
