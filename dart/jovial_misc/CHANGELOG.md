@@ -114,3 +114,8 @@ dartfmt -w
 
 # 0.9.2
 - Force pub.dev to run analysis (spurios bug on Google's end).
+
+# 0.10.0
+- Fix https://github.com/zathras/misc/issues/6:  Now CircularBuffer's length
+  setter removes from end of buffer, not from beginning.
+- Add CircularBuffer.removeLastAndClear
